@@ -1,20 +1,22 @@
-// ConfigFirewall.js
+// SyncthingLogonTask.js
 // Written by Bill Stewart (bstewart AT iname.com) for Syncthing
 
 // Notes:
 // * Adds a scheduled task to run StartSyncthing.js at logon
 // * Removes the scheduled task
+// * Tests whether the scheduled task exists
 
-// BEGIN MESSAGES
+// BEGIN LOCALIZATION
 var MSG_DLG_TITLE            = "Syncthing";
 var MSG_QUERY_CREATE         = "Create scheduled task to start Syncthing at logon?";
 var MSG_QUERY_REMOVE         = "Remove scheduled task that starts Syncthing at logon?";
 var MSG_TASK_NAME            = "Start Syncthing at logon";
 var MSG_ERROR_DESC_NOT_FOUND = "(No error description found)";
-// END MESSAGES
+// END LOCALIZATION
 
 // Global Win32 API constants
-var ERROR_ACCESS_DENIED = 5;
+var ERROR_FILE_NOT_FOUND = 2;
+var ERROR_ACCESS_DENIED  = 5;
 // Global message box constants
 var MB_YESNO        = 0x04;
 var MB_ICONERROR    = 0x10;
@@ -160,7 +162,7 @@ function getUserId() {
 
 function main() {
   var result = 0;
-  var validParams = Args.Named.Exists("create") || Args.Named.Exists("remove");
+  var validParams = Args.Named.Exists("create") || Args.Named.Exists("remove") || Args.Named.Exists("test");
   var taskName = MSG_TASK_NAME + " (" + getUserId() + ")";
   if ( Args.Named.Exists("create") ) {
     if ( (Args.Named.Exists("silent")) || query(MSG_QUERY_CREATE) ) {
@@ -174,9 +176,16 @@ function main() {
       result = removeTask(taskName);
     }
   }
+  else if ( Args.Named.Exists("test") ) {
+    if ( ! taskExists(taskName) ) {
+      result = ERROR_FILE_NOT_FOUND;
+    }
+  }
   if ( validParams ) {
     if ( ! Args.Named.Exists("silent") ) {
-      reportStatus(result);
+      if ( ! Args.Named.Exists("test") ) {
+        reportStatus(result);
+      }
     }
   }
   else {

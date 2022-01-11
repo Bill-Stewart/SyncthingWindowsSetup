@@ -7,26 +7,29 @@
 ; * See building.md for build/localization info
 
 #if Ver < EncodeVer(6,0,0,0)
-  #error This script requires Inno Setup 6 or later
+#error This script requires Inno Setup 6 or later
 #endif
 
+#define AppID "{1EEA2B6F-FD76-47D7-B74C-03E14CF043F9}"
 #define AppName "Syncthing"
 #define AppVersion GetStringFileInfo("bin\amd64\syncthing.exe",PRODUCT_VERSION)
 #define AppPublisher "Syncthing Foundation"
 #define AppURL "https://syncthing.net/"
 #define ServiceName "syncthing"
 #define ServiceStopTimeout "10000"
+#define DefaultAutoUpgradeInterval "12"
 #define DefaultListenAddress "127.0.0.1"
 #define DefaultListenPort "8384"
 #define ConfigurationPageName "ConfigurationPage"
 #define ScriptNameConfigSyncthingService "ConfigSyncthingService.js"
+#define ScriptNameSetSyncthingConfig "SetSyncthingConfig.js"
 #define ScriptNameStartSyncthing "StartSyncthing.js"
 #define ScriptNameStopSyncthing "StopSyncthing.js"
 #define ScriptNameSyncthingFirewallRule "SyncthingFirewallRule.js"
 #define ScriptNameSyncthingLogonTask "SyncthingLogonTask.js"
 
 [Setup]
-AppId={{1EEA2B6F-FD76-47D7-B74C-03E14CF043F9}
+AppId={{#AppID}
 AppName={#AppName}
 AppVerName={#AppName}
 AppPublisher={#AppPublisher}
@@ -47,7 +50,6 @@ OutputDir=.
 OutputBaseFilename=syncthing-{#AppVersion}-setup
 Compression=lzma2/max
 SolidCompression=yes
-ShowTasksTreeLines=yes
 WizardStyle=modern
 WizardSizePercent=120
 UninstallFilesDir={app}\uninstall
@@ -68,47 +70,43 @@ Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"
 [Files]
 ; Scripts (use preprocessor to support multiple languages)
 #define protected i 0
-#sub LocalizeScriptNames
+#sub LocalizeScripts
 #define protected Language Languages[i]
-#define protected ScriptNameFirewallRule  ReadIni(LocalizationFile, Language, "ScriptNameSyncthingFirewallRule")
+#define protected ScriptNameSetConfig     ReadIni(LocalizationFile, Language, "ScriptNameSetSyncthingConfig")
 #define protected ScriptNameConfigService ReadIni(LocalizationFile, Language, "ScriptNameConfigSyncthingService")
+#define protected ScriptNameFirewallRule  ReadIni(LocalizationFile, Language, "ScriptNameSyncthingFirewallRule")
 #define protected ScriptNameLogonTask     ReadIni(LocalizationFile, Language, "ScriptNameSyncthingLogonTask")
 #define protected ScriptNameStart         ReadIni(LocalizationFile, Language, "ScriptNameStartSyncthing")
 #define protected ScriptNameStop          ReadIni(LocalizationFile, Language, "ScriptNameStopSyncthing")
 Source: "{#ScriptNameFirewallRule}";  DestDir: "{app}"; DestName: "{#ScriptNameSyncthingFirewallRule}";  Flags: ignoreversion; Languages: {#Language}
+Source: "{#ScriptNameSetConfig}";     DestDir: "{app}"; DestName: "{#ScriptNameSetSyncthingConfig}";     Flags: ignoreversion; Languages: {#Language}
 Source: "{#ScriptNameConfigService}"; DestDir: "{app}"; DestName: "{#ScriptNameConfigSyncthingService}"; Flags: ignoreversion; Languages: {#Language}; Check: IsAdminInstallMode()
 Source: "{#ScriptNameLogonTask}";     DestDir: "{app}"; DestName: "{#ScriptNameSyncthingLogonTask}";     Flags: ignoreversion; Languages: {#language}; Check: not IsAdminInstallMode()
 Source: "{#ScriptNameStart}";         DestDir: "{app}"; DestName: "{#ScriptNameStartSyncthing}";         Flags: ignoreversion; Languages: {#language}; Check: not IsAdminInstallMode()
 Source: "{#ScriptNameStop}";          DestDir: "{app}"; DestName: "{#ScriptNameStopSyncthing}";          Flags: ignoreversion; Languages: {#language}; Check: not IsAdminInstallMode()
 #endsub
-#for { i = 0; i < NumLanguages; i++ } LocalizeScriptNames
+#for { i = 0; i < NumLanguages; i++ } LocalizeScripts
 ; General files
 Source: "redist\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs
 ; 64-bit binaries
 Source: "bin\amd64\syncthing.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode()
 Source: "nssm\amd64\nssm.exe";     DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode() and IsAdminInstallMode()
 ; 32-bit binaries
-Source: "bin\386\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion solidbreak; Check: not Is64BitInstallMode()
-Source: "nssm\386\nssm.exe";       DestDir: "{app}"; Flags: ignoreversion;            Check: (not Is64BitInstallMode()) and IsAdminInstallMode()
+Source: "bin\386\syncthing.exe"; DestDir: "{app}"; Flags: ignoreversion solidbreak; Check: not Is64BitInstallMode()
+Source: "nssm\386\nssm.exe";     DestDir: "{app}"; Flags: ignoreversion; Check: (not Is64BitInstallMode()) and IsAdminInstallMode()
 
-[Registry]
-; non-admin only - registry values for StartSyncthing.js
-Root: HKA; Subkey: "SOFTWARE\Syncthing";                                                                                                               Flags: uninsdeletekeyifempty; Check: not IsAdminInstallMode()
-Root: HKA; Subkey: "SOFTWARE\Syncthing"; ValueType: string; ValueName: "allowautoupgrade";  ValueData: "{code:GetAllowAutoUpgrade}";                   Flags: uninsdeletevalue;      Check: not IsAdminInstallMode()
-Root: HKA; Subkey: "SOFTWARE\Syncthing"; ValueType: string; ValueName: "ConfigPageAddress"; ValueData: "{code:GetListenAddress}:{code:GetListenPort}"; Flags: uninsdeletevalue;      Check: not IsAdminInstallMode()
-
-; General notes on use of cscript.exe vs. wscript.exe:
-; * Use cscript.exe for hidden commanads (so error doesn't block execution)
-; * Use wscript.exe for interactive commands
+; Why use cscript.exe vs. wscript.exe?
+; * Use cscript.exe for hidden scripts (so error doesn't block execution)
+; * Use wscript.exe for interactive scripts
 
 [Icons]
-; both admin and non-admin
+; Both admin and non-admin
 Name: "{group}\{cm:ShortcutNameFAQ}";               Filename: "{app}\extra\FAQ.pdf"
 Name: "{group}\{cm:ShortcutNameGettingStarted}";    Filename: "{app}\extra\Getting-Started.pdf"
 Name: "{group}\{cm:ShortcutNameConfigurationPage}"; Filename: "{app}\{#ConfigurationPageName}.url"; Comment: "{cm:ShortcutNameConfigurationPageComment}"; IconFilename: "{app}\syncthing.exe"
-; admin only - configure service
+; Admin: Configure service
 Name: "{group}\{cm:ShortcutNameConfigureService}"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\{#ScriptNameConfigSyncthingService}"""; Comment: "{cm:ShortcutNameConfigureServiceComment}"; IconFilename: "{app}\nssm.exe"; Flags: excludefromshowinnewinstall; Check: IsAdminInstallMode()
-; non-admin only - start and stop shortcuts
+; Non-admin: Start and stop shortcuts
 Name: "{group}\{cm:ShortcutNameStartSyncthing}"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\{#ScriptNameStartSyncthing}"""; Comment: "{cm:ShortcutNameStartSyncthingComment}"; IconFilename: "{app}\syncthing.exe"; Check: not IsAdminInstallMode()
 Name: "{group}\{cm:ShortcutNameStopSyncthing}";  Filename: "{sys}\wscript.exe"; Parameters: """{app}\{#ScriptNameStopSyncthing}""";  Comment: "{cm:ShortcutNameStopSyncthingComment}";  IconFilename: "{app}\syncthing.exe"; Check: not IsAdminInstallMode()
 
@@ -118,23 +116,27 @@ Filename: "{app}\{#ConfigurationPageName}.url"; Section: "InternetShortcut"; Key
 Filename: "{app}\{#ConfigurationPageName}.url"; Section: "InternetShortcut"; Key: "IconIndex"; String: "0"
 
 [Tasks]
-Name: allowautoupgrade; Description: "{cm:TasksAllowAutoUpgradeDescription}"; Check: not ServiceExists()
+Name: startatboot;  Description: "{cm:TasksStartAtBoot}";  Check: IsAdminInstallMode()
+Name: startatlogon; Description: "{cm:TasksStartAtLogon}"; Check: (not IsAdminInstallMode()) and (not LogonTaskExists())
 
 [Run]
-; admin only - configure install directory permissions and create firewall rule
-Filename: "{sys}\icacls.exe";  Parameters: """{app}"" /grant ""*S-1-5-19:(OI)(CI)M"" /t";                            StatusMsg: "{cm:RunStatusMsg}"; Flags: runhidden; Check: IsAdminInstallMode()
-Filename: "{sys}\cscript.exe"; Parameters: """{app}\{#ScriptNameSyncthingFirewallRule}"" /create /elevated /silent"; StatusMsg: "{cm:RunStatusMsg}"; Flags: runhidden; Check: IsAdminInstallMode()
-; non-admin only - create or update per-user logon task
-Filename: "{sys}\cscript.exe"; Parameters: """{app}\{#ScriptNameSyncthingLogonTask}"" /create /silent"; Flags: runhidden; StatusMsg: "{cm:RunStatusMsg}"; Check: not IsAdminInstallMode()
-; postinstall - admin - allow start service when Setup completes
-Filename: "{app}\nssm.exe"; Parameters: "start ""{#ServiceName}"""; Description: "{cm:RunPostInstallStartServiceDescription}"; Flags: runascurrentuser runhidden nowait postinstall; Check: IsAdmininstallMode() and StartAfterInstall() and ServiceExists() and (not ServiceRunning())
-; postinstall - non-admin - allow start as current user when Setup completes
-Filename: "{sys}\wscript.exe"; Parameters: """{app}\{#ScriptNameStartSyncthing}"""; Description: "{cm:RunPostInstallStartDescription}"; Flags: nowait postinstall; Check: (not IsAdminInstallMode()) and StartAfterInstall() and FirewallRuleExists()
+; Admin: Set directory permissions; add firewall rule
+Filename: "{sys}\icacls.exe";  Parameters: """{app}"" /grant ""*S-1-5-19:(OI)(CI)M"" /t";                            Flags: runhidden; StatusMsg: "{cm:RunStatusMsg}"; Check: IsAdminInstallMode()
+Filename: "{sys}\cscript.exe"; Parameters: """{app}\{#ScriptNameSyncthingFirewallRule}"" /create /elevated /silent"; Flags: runhidden; StatusMsg: "{cm:RunStatusMsg}"; Check: IsAdminInstallMode()
+; Non-admin: Add Firewall rule; add logon task
+Filename: "{sys}\wscript.exe"; Parameters: """{app}\{#ScriptNameSyncthingFirewallRule}"" /create"; StatusMsg: "{cm:RunStatusMsg}"; Check: (not IsAdminInstallMode()) and (not FirewallRuleExists()) and (not WizardSilent())
+Filename: "{sys}\cscript.exe"; Parameters: """{app}\{#ScriptNameSyncthingLogonTask}"" /create /silent"; Flags: runhidden; StatusMsg: "{cm:RunStatusMsg}"; Tasks: startatlogon
+; Both admin and non-admin: Set config.xml defaults
+Filename: "{sys}\cscript.exe"; Parameters: """{app}\{#ScriptNameSetSyncthingConfig}"" {code:GetSetConfigParams}"; Flags: runhidden; StatusMsg: "{cm:RunStatusMsg}"
+; Admin postinstall
+Filename: "{app}\nssm.exe"; Parameters: "start ""{#ServiceName}"""; Description: "{cm:RunPostInstallStartServiceDescription}"; Flags: runascurrentuser runhidden nowait postinstall; Check: IsAdmininstallMode() and GetStartAfterInstall() and ServiceExists() and (not ServiceRunning())
+; Non-Admin postinstall
+Filename: "{sys}\cscript.exe"; Parameters: """{app}\{#ScriptNameStartSyncthing}"" /silent"; Description: "{cm:RunPostInstallStartDescription}"; Flags: runhidden nowait postinstall; Check: (not IsAdminInstallMode()) and GetStartAfterInstall() and FirewallRuleExists()
 
 [UninstallRun]
-; admin only - remove firewall rule
+; Admin: remove firewall rule
 Filename: "{sys}\cscript.exe"; Parameters: """{app}\{#ScriptNameSyncthingFirewallRule}"" /remove /elevated /silent"; Flags: runhidden; RunOnceId: removefwrule; Check: IsAdminInstallMode()
-; non-admin only - remove per-user logon task
+; Non-admin: remove logon task
 Filename: "{sys}\cscript.exe"; Parameters: """{app}\{#ScriptNameSyncthingLogonTask}"" /remove /silent"; Flags: runhidden; RunOnceId: removelogontask; Check: not IsAdminInstallMode()
 
 [UninstallDelete]
@@ -159,8 +161,9 @@ type
   end;
 
 var
-  NetConfigPage: TInputQueryWizardPage;  // Custom wizard page
-  ListenAddress, ListenPort: string;     // GUI configuration page listen address and port
+  ConfigPage: TInputQueryWizardPage;                       // Custom wizard page
+  AutoUpgradeInterval, ListenAddress, ListenPort: string;  // Configuration page values
+  StartAfterInstall: Boolean;
 
 // Windows API functions
 function GetUserNameExW(NameFormat: Integer; lpNameBuffer: string; var nSize: DWORD): Boolean;
@@ -205,17 +208,17 @@ begin
   result := false;
   Manager := OpenSCManager('', '', SC_MANAGER_CONNECT);
   if Manager <> 0 then
-  try
-    Service := OpenService(Manager, '{#ServiceName}', SERVICE_QUERY_STATUS);
-    if Service <> 0 then
     try
-      result := QueryServiceStatus(Service, Status);
+      Service := OpenService(Manager, '{#ServiceName}', SERVICE_QUERY_STATUS);
+      if Service <> 0 then
+        try
+          result := QueryServiceStatus(Service, Status);
+        finally
+          CloseServiceHandle(Service);
+        end;
     finally
-      CloseServiceHandle(Service);
+      CloseServiceHandle(Manager);
     end;
-  finally
-    CloseServiceHandle(Manager);
-  end;
 end;
 
 function ServiceRunning(): Boolean;
@@ -226,17 +229,17 @@ begin
   result := false;
   Manager := OpenSCManager('', '', SC_MANAGER_CONNECT);
   if Manager <> 0 then
-  try
-    Service := OpenService(Manager, '{#ServiceName}', SERVICE_QUERY_STATUS);
     try
-      if QueryServiceStatus(Service, Status) then
-        result := Status.dwCurrentState = SERVICE_RUNNING;
+      Service := OpenService(Manager, '{#ServiceName}', SERVICE_QUERY_STATUS);
+      try
+        if QueryServiceStatus(Service, Status) then
+          result := Status.dwCurrentState = SERVICE_RUNNING;
+      finally
+        CloseServiceHandle(Service);
+      end;
     finally
-      CloseServiceHandle(Service);
+      CloseServiceHandle(Manager);
     end;
-  finally
-    CloseServiceHandle(Manager);
-  end;
 end;
 
 function ParamStrExists(const Param: string): Boolean;
@@ -252,91 +255,92 @@ begin
   end;
 end;
 
-function StartAfterInstall(): boolean;
-begin
-  result := not ParamStrExists('/nostart');
-end;
-
 function InitializeSetup(): Boolean;
 begin
   result := true;
-  // Support /listenaddress and /listenport command line parameters
-  ListenAddress := Trim(ExpandConstant('{param:listenaddress|{#DefaultListenAddress}}'));
-  ListenPort := Trim(ExpandConstant('{param:listenport|{#DefaultListenPort}}'));
+  // Custom command line parameters
+  AutoUpgradeInterval := GetPreviousData('AutoUpgradeInterval',
+    Trim(ExpandConstant('{param:autoupgradeinterval|{#DefaultAutoUpgradeInterval}}')));
+  ListenAddress := GetPreviousData('ListenAddress',
+    Trim(ExpandConstant('{param:listenaddress|{#DefaultListenAddress}}')));
+  ListenPort := GetPreviousData('ListenPort',
+    Trim(ExpandConstant('{param:listenport|{#DefaultListenPort}}')));
+  StartAfterInstall := not ParamStrExists('/nostart');
 end;
 
 procedure InitializeWizard();
 begin
-  // Create custom network configuration page
-  NetConfigPage := CreateInputQueryPage(wpSelectProgramGroup,
-    CustomMessage('NetConfigPageCaption'),
-    CustomMessage('NetConfigPageDescription'),
-    CustomMessage('NetConfigPageSubCaption'));
-  NetConfigPage.Add(FmtMessage(CustomMessage('NetConfigPageItem0'), ['{#DefaultListenAddress}']), false);
-  NetConfigPage.Add(FmtMessage(CustomMessage('NetConfigPageItem1'), ['{#DefaultListenPort}']), false);
-  NetConfigPage.Values[0] := ListenAddress;
-  NetConfigPage.Values[1] := ListenPort;
+  // Custom configuration page
+  ConfigPage := CreateInputQueryPage(wpSelectProgramGroup,
+    CustomMessage('ConfigPageCaption'),
+    CustomMessage('ConfigPageDescription'),
+    CustomMessage('ConfigPageSubCaption'));
+  ConfigPage.Add(FmtMessage(CustomMessage('ConfigPageItem0'), ['{#DefaultAutoUpgradeInterval}']), false);
+  ConfigPage.Add(FmtMessage(CustomMessage('ConfigPageItem1'), ['{#DefaultListenAddress}']), false);
+  ConfigPage.Add(FmtMessage(CustomMessage('ConfigPageItem2'), ['{#DefaultListenPort}']), false);
+  ConfigPage.Values[0] := AutoUpgradeInterval;
+  ConfigPage.Values[1] := ListenAddress;
+  ConfigPage.Values[2] := ListenPort;
 end;
 
-function ShouldSkipPage(PageID: Integer): Boolean;
+procedure RegisterPreviousData(PreviousDataKey: Integer);
 begin
-  result := false;
-  if PageID = NetConfigPage.ID then
-  begin
-    if IsAdminInstallMode() then
-      // Skip network page if service already installed
-      result := ServiceExists();
-  end;
+  SetPreviousData(PreviousDataKey, 'AutoUpgradeInterval', AutoUpgradeInterval);
+  SetPreviousData(PreviousDataKey, 'ListenAddress', ListenAddress);
+  SetPreviousData(PreviousDataKey, 'ListenPort', ListenPort);
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
-  Port: Integer;
+  UpgradeInterval, Port: Integer;
 begin
   result := true;
-  if CurPageID = NetConfigPage.ID then
+  if CurPageID = ConfigPage.ID then
   begin
-    // Validate listen address (not empty)
-    result := Trim(NetConfigPage.Values[0]) <> '';
+    // Validate upgrade interval (>= 0 and <= 65535)
+    UpgradeInterval := StrToIntDef(Trim(ConfigPage.Values[0]), -1);
+    result := (UpgradeInterval >= 0) and (UpgradeInterval <= 65535);
     if not result then
     begin
-      Log(CustomMessage('NetConfigPageItem0Empty'));
+      Log(CustomMessage('ConfigPageItem0NotValid'));
       if not WizardSilent() then
-        MsgBox(CustomMessage('NetConfigPageItem0Empty'), mbError, MB_OK);
-      WizardForm.ActiveControl := NetConfigPage.Edits[0];
-      NetConfigPage.Values[0] := '{#DefaultListenAddress}';
-      NetConfigPage.Edits[0].SelectAll();
+        MsgBox(CustomMessage('ConfigPageItem0NotValid'), mbError, MB_OK);
+      WizardForm.ActiveControl := ConfigPage.Edits[0];
+      ConfigPage.Values[0] := '{#DefaultAutoUpgradeInterval}';
+      ConfigPage.Edits[0].SelectAll();
       exit;
     end;
     // Update global based on page
-    ListenAddress := NetConfigPage.Values[0];
-    // Validate listen port (not empty)
-    result := Trim(NetConfigPage.Values[1]) <> '';
+    AutoUpgradeInterval := ConfigPage.Values[0];
+    // Validate listen address (not empty)
+    result := Trim(ConfigPage.Values[1]) <> '';
     if not result then
     begin
-      Log(CustomMessage('NetConfigPageItem1Empty'));
+      Log(CustomMessage('ConfigPageItem1Empty'));
       if not WizardSilent() then
-        MsgBox(CustomMessage('NetConfigPageItem1Empty'), mbError, MB_OK);
-      WizardForm.ActiveControl := NetConfigPage.Edits[1];
-      NetConfigPage.Values[1] := '{#DefaultListenPort}';
-      NetConfigPage.Edits[1].SelectAll();
+        MsgBox(CustomMessage('ConfigPageItem1Empty'), mbError, MB_OK);
+      WizardForm.ActiveControl := ConfigPage.Edits[1];
+      ConfigPage.Values[1] := '{#DefaultListenAddress}';
+      ConfigPage.Edits[1].SelectAll();
       exit;
     end;
+    // Update global based on page
+    ListenAddress := ConfigPage.Values[1];
     // Validate listen port (>= 1024 and <= 65535)
-    Port := StrToIntDef(Trim(NetConfigPage.Values[1]), 0);
+    Port := StrToIntDef(Trim(ConfigPage.Values[2]), -1);
     result := (Port >= 1024) and (Port <= 65535);
     if not result then
     begin
-      Log(CustomMessage('NetConfigPageItem1NotValid'));
+      Log(CustomMessage('ConfigPageItem2NotValid'));
       if not WizardSilent() then
-        MsgBox(CustomMessage('NetConfigPageItem1NotValid'), mbError, MB_OK);
-      WizardForm.ActiveControl := NetConfigPage.Edits[1];
-      NetConfigPage.Values[1] := '{#DefaultListenPort}';
-      NetConfigPage.Edits[1].SelectAll();
+        MsgBox(CustomMessage('ConfigPageItem2NotValid'), mbError, MB_OK);
+      WizardForm.ActiveControl := ConfigPage.Edits[1];
+      ConfigPage.Values[2] := '{#DefaultListenPort}';
+      ConfigPage.Edits[2].SelectAll();
       exit;
     end;
     // Update global based on page
-    ListenPort := NetConfigPage.Values[1];
+    ListenPort := ConfigPage.Values[2];
   end;
 end;
 
@@ -349,8 +353,7 @@ begin
   // Show installation mode
   if Info <> '' then
     Info := Info + NewLine + NewLine;
-  Info := Info + CustomMessage('ReadyMemoInstallInfo') + NewLine
-    + Space;
+  Info := Info + CustomMessage('ReadyMemoInstallInfo') + NewLine + Space;
   if IsAdminInstallMode() then
     Info := Info + CustomMessage('ReadyMemoInstallAdmin')
   else
@@ -385,15 +388,16 @@ begin
       Info := Info + NewLine + NewLine;
     Info := Info + MemoGroupInfo;
   end;
-  // Show network configuration if service doesn't exist
-  if not ServiceExists() then
-  begin
-    if Info <> '' then
-      Info := Info + NewLine + NewLine;
-    Info := Info + CustomMessage('ReadyMemoNetConfigInfo') + NewLine
-      + Space + CustomMessage('ReadyMemoNetConfigItem0') + ' ' + ListenAddress + NewLine
-      + Space + CustomMessage('ReadyMemoNetConfigItem1') + ' ' + ListenPort;
-  end;
+  if Info <> '' then
+    Info := Info + NewLine + NewLine;
+  Info := Info + CustomMessage('ReadyMemoConfigInfo') + NewLine + Space;
+  if StrToInt(AutoUpgradeInterval) <> 0 then
+    Info := Info + FmtMessage(CustomMessage('ReadyMemoConfigItem0Enabled'), [AutoUpgradeInterval])
+  else
+    Info := Info + CustomMessage('ReadyMemoConfigItem0Disabled');
+  Info := Info + NewLine;
+  Info := Info + Space + CustomMessage('ReadyMemoConfigItem1') + ' ' + ListenAddress + NewLine +
+    Space + CustomMessage('ReadyMemoConfigItem2') + ' ' + ListenPort;
   if MemoTasksInfo <> '' then
   begin
     if Info <> '' then
@@ -403,25 +407,32 @@ begin
   result := Info;
 end;
 
-// String parameter required for Check functions
-function GetAllowAutoUpgrade(Param: string): string;
-begin
-  if WizardIsTaskSelected('allowautoupgrade') then
-    result := 'true'
-  else
-    result := 'false';
-end;
-
-// String parameter required for Check functions
+// Requires string param
 function GetListenAddress(Param: string): string;
 begin
   result := ListenAddress;
 end;
 
-// String parameter required for Check functions
+// Requires string param
 function GetListenPort(Param: string): string;
 begin
   result := ListenPort;
+end;
+
+// Requires string param
+function GetSetConfigParams(Param: string): string;
+begin
+  if IsAdminInstallMode() then
+    result := '/localservice'
+  else
+    result := '/currentuser';
+  result := result + ' /autoupgradeinterval:' + AutoUpgradeInterval;
+  result := result + ' /guiaddress:"' + ListenAddress + ':' + ListenPort + '"';
+end;
+
+function GetStartAfterInstall(): Boolean;
+begin
+  result := StartAfterInstall;
 end;
 
 function ExecEx(const FileName, Params: string; const Hide: Boolean): Integer;
@@ -443,14 +454,20 @@ begin
   if OK then
     Log('Exec exit code: ' + IntToStr(result))
   else
-    Log('Exec failed: ' + SysErrorMessage(result)
-       + ' (' + IntToStr(result) + ')');
+    Log('Exec failed: ' + SysErrorMessage(result) + ' (' + IntToStr(result) + ')');
 end;
 
 function FirewallRuleExists(): Boolean;
 begin
   result := ExecEx(ExpandConstant('{sys}\cscript.exe'),
     ExpandConstant('"{app}\{#ScriptNameSyncthingFirewallRule}" /test'),
+    true) = 0;
+end;
+
+function LogonTaskExists(): Boolean;
+begin
+  result := ExecEx(ExpandConstant('{sys}\cscript.exe'),
+    ExpandConstant('"{app}\{#ScriptNameSyncthingLogonTask}" /test'),
     true) = 0;
 end;
 
@@ -465,10 +482,7 @@ begin
     Params := ExpandConstant('install "{#ServiceName}" "{app}\syncthing.exe"');
     ExecEx(FileName, Params, true);
     // set AppParameters
-    Params := 'set "{#ServiceName}" AppParameters "--no-browser --no-restart';
-    if not WizardIsTaskSelected('allowautoupgrade') then
-      Params := Params + ' --no-upgrade';
-    Params := Params + ' --gui-address=\"' + GetListenAddress('') + ':' + GetListenPort('') + '\""';
+    Params := 'set "{#ServiceName}" AppParameters "--no-browser --no-restart"';
     ExecEx(FileName, Params, true);
     // set DisplayName
     Params := ExpandConstant('set "{#ServiceName}" DisplayName "{cm:ServiceDisplayName}"');
@@ -483,7 +497,10 @@ begin
     Params := 'set "{#ServiceName}" AppPriority BELOW_NORMAL_PRIORITY_CLASS';
     ExecEx(FileName, Params, true);
     // set Start
-    Params := 'set "{#ServiceName}" Start SERVICE_DELAYED_AUTO_START';
+    if WizardIsTaskSelected('startatboot') then
+      Params := 'set "{#ServiceName}" Start SERVICE_DELAYED_AUTO_START'
+    else
+      Params := 'set "{#ServiceName}" Start SERVICE_DEMAND_START';
     ExecEx(Filename, Params, true);
     // set AppNoConsole
     Params := 'set "{#ServiceName}" AppNoConsole 1';
@@ -508,9 +525,6 @@ begin
     ExecEx(FileName, Params, true);
     // set AppExit 4 Restart
     Params := 'set "{#ServiceName}" AppExit 4 Restart';
-    ExecEx(FileName, Params, true);
-    // set AppEnvironmentExtra
-    Params := 'set "{#ServiceName}" AppEnvironmentExtra STNODEFAULTFOLDER=1';
     ExecEx(FileName, Params, true);
   end;
 end;
@@ -551,19 +565,6 @@ begin
     begin
       if not ServiceExists() then
         InstallService();
-    end
-    else
-    begin
-      if not WizardSilent() then
-      begin
-        if not FirewallRuleExists() then
-        begin
-          // Prompt to create Windows Firewall rule
-          ExecEx(ExpandConstant('{sys}\wscript.exe'),
-            ExpandConstant('"{app}\{#ScriptNameSyncthingFirewallRule}" /create'),
-            false);
-        end;
-      end;
     end;
   end;
 end;
@@ -572,12 +573,16 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usUninstall then
   begin
-    if IsAdminInstallMode() and ServiceExists() then
+    if IsAdminInstallMode() then
     begin
-      StopService();
-      RemoveService();
-    end;
-    if not IsAdminInstallMode() then
+      if ServiceExists() then
+      begin
+        if ServiceRunning() then
+          StopService();
+        RemoveService();
+      end;
+    end
+    else
     begin
       ExecEx(ExpandConstant('{sys}\cscript.exe'),
         ExpandConstant('"{app}\{#ScriptNameStopSyncthing}" /silent'),

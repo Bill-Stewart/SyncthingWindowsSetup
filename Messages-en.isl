@@ -30,25 +30,31 @@ ShortcutNameStopSyncthing=Stop Syncthing
 ShortcutNameStopSyncthingComment=Stops Syncthing.
 ; [Tasks]
 TasksAllowAutoUpgradeDescription=Allow Syncthing to &upgrade automatically
+TasksStartAtBoot=&Start Syncthing service automatically when system boots
+TasksStartAtLogon=&Start Syncthing automatically when logging on
 ; [Run]
 RunStatusMsg=Completing setup tasks...
 RunPostInstallStartDescription=&Start Syncthing
 RunPostInstallStartServiceDescription=&Start Syncthing service
-; Network configuration page
-NetConfigPageCaption=Select GUI Configuration Page Settings
-NetConfigPageDescription=How should the GUI configuration page network settings be configured?
-NetConfigPageSubCaption=NOTE: Please read the Syncthing documentation before changing these settings from the defaults.%n%nSpecify the GUI configuration page network settings, then click Next.
-NetConfigPageItem0=Listen &address (default is 127.0.0.1):
-NetConfigPageItem1=Listen &port (default is 8384):
-NetConfigPageItem0Empty=The listen address cannot be empty. Please specify a listen address.
-NetConfigPageItem1Empty=The listen port cannot be empty. Please specify a listen port.
-NetConfigPageItem1NotValid=The listen port must be in the range 1024 through 65535.
+; Configuration page
+ConfigPageCaption=Select Configuration Settings
+ConfigPageDescription=How should Setup configure Syncthing?
+ConfigPageSubCaption=Specify Syncthing configuration settings, then click Next.
+ConfigPageItem0=Automatic &upgrade interval, in hours (0 to disable; default is %1):
+ConfigPageItem1=GUI configuration page listen &address (default is %1):
+ConfigPageItem2=GUI configuration page listen &port (default is %1):
+; Configuration page errors
+ConfigPageItem0NotValid=The automatic upgrade interval must be in the range 0 through 65535.
+ConfigPageItem1Empty=The listen address cannot be empty. Please specify a listen address.
+ConfigPageItem2NotValid=The listen port must be in the range 1024 through 65535.
 ; Ready memo page
 ReadyMemoInstallInfo=Installation mode:
 ReadyMemoInstallAdmin=Install for all users as Windows service
 ReadyMemoInstallCurrentUser=Install for current user (%1)
-ReadyMemoNetConfigInfo=GUI configuration page settings:
-ReadyMemoNetConfigItem0=Listen address is
-ReadyMemoNetConfigItem1=Listen port is
+ReadyMemoConfigInfo=Configuration settings:
+ReadyMemoConfigItem0Enabled=Automatic upgrade check occurs every %1 hours
+ReadyMemoConfigItem0Disabled=Automatic upgrades are disabled
+ReadyMemoConfigItem1=GUI configuration page listen address is
+ReadyMemoConfigItem2=GUI configuration page listen port is
 ; Misc.
 RunCommandMessage=Run command: "%1" %2

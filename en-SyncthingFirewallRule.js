@@ -1,4 +1,4 @@
-// ConfigFirewall.js
+// SyncthingFirewallRule.js
 // Written by Bill Stewart (bstewart AT iname.com) for Syncthing
 
 // Notes:
@@ -7,12 +7,12 @@
 // * Tests whether the firewall rule exists; exit code = 0 if it exists, or
 //   ERROR_FILE_NOT_FOUND (2) if it does not exist
 
-// BEGIN MESSAGES
+// BEGIN LOCALIZATION
 var MSG_DLG_TITLE            = "Syncthing";
 var MSG_QUERY_CREATE_RULE    = "Create Windows Firewall rule for Syncthing?";
 var MSG_QUERY_REMOVE_RULE    = "Remove Syncthing Windows Firewall rule?";
 var MSG_ERROR_DESC_NOT_FOUND = "(No error description found)";
-// END MESSAGES
+// END LOCALIZATION
 
 // Global Win32 API constants
 var ERROR_FILE_NOT_FOUND     = 2;
@@ -33,7 +33,7 @@ var WshShell     = new ActiveXObject("WScript.Shell");
 var NetFWPolicy2 = new ActiveXObject("HNetCfg.FWPolicy2");
 // Global variables
 var ScriptPath = WScript.ScriptFullName.substring(0,WScript.ScriptFullName.length - WScript.ScriptName.length);
-var RuleName = "Syncthing";
+var RuleName   = "Syncthing";
 
 function trim(s) {
   return s.replace(/(^\s*)|(\s*$)/g, "");
@@ -85,6 +85,22 @@ function getErrorDescription(errorCode) {
   }
 }
 
+function executableRuleExists(executablePath) {
+  var result = false;
+  try {
+    var netFWRules = new Enumerator(NetFWPolicy2.Rules);
+    for ( ; ! netFWRules.atEnd(); netFWRules.moveNext() ) {
+      result = netFWRules.item().ApplicationName.toLowerCase() == executablePath.toLowerCase();
+      if ( result ) {
+        break;
+      }
+    }
+  }
+  catch(err) {
+  }
+  return result;
+}
+
 function ruleExists(ruleName,executablePath) {
   var result = false;
   var netFWRule = null;
@@ -110,9 +126,6 @@ function createApplicationRule(ruleName,executablePath) {
     netFWRule.Protocol = 256;  // no protocol restriction
     try {
       NetFWPolicy2.Rules.Add(netFWRule);
-      while ( ! ruleExists(ruleName,executablePath) ) {
-        WScript.Sleep(500);
-      }
     }
     catch(err) {
       result = err.number;
@@ -167,7 +180,7 @@ function main() {
     return result;
   }
   else if ( Args.Named.Exists("test") ) {
-    if ( ! ruleExists(RuleName,syncthingPath) ) {
+    if ( ! executableRuleExists(syncthingPath) ) {
       result = ERROR_FILE_NOT_FOUND;
     }
     return result;

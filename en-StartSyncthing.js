@@ -4,18 +4,13 @@
 // Notes:
 // * Starts Syncthing for the current user in a hidden window with "below
 //   normal" process priority
-// * IF HKCU\Syncthing\allowautoupgrade string value in registry is 'false',
-//   adds '--no-upgrade' to the command line
-// * If HKCU\Syncthing\ConfigPageAddress string value in registry is set, uses
-//   '--gui-address="<registryvalue>"' on the command line; if it is not set,
-//   uses '--gui-address="127.0.0.1:8384"' instead
 // * Use the '/silent' command line parameter to suppress dialog that appears
 //   if you run this script and Syncthing is already running
 
-// BEGIN MESSAGES
+// BEGIN LOCALIZATION
 var MSG_DLG_TITLE       = "Syncthing";
 var MSG_ALREADY_RUNNING = "Syncthing is already running.";
-// END MESSAGES
+// END LOCALIZATION
 
 // Global Win32 API constants
 var SW_HIDE                     = 0;
@@ -45,29 +40,6 @@ function isSyncthingRunning() {
   return procCount > 0;
 }
 
-function getRegistryString(path) {
-  var result = "";
-  try {
-    result = WshShell.RegRead(path);
-  }
-  catch(err) {
-  }
-  return result;
-}
-
-function getParams() {
-  var regStr = getRegistryString("HKCU\\Software\\Syncthing\\allowautoupgrade");
-  var allowAutoUpgrade = regStr != "false";
-  regStr = getRegistryString("HKCU\\Software\\Syncthing\\ConfigPageAddress");
-  var configPageAddress = regStr == "" ? DefaultConfigPageAddress : regStr;
-  var result = '--no-browser';
-  if ( ! allowAutoUpgrade ) {
-      result += ' --no-upgrade';
-  }
-  result += ' --gui-address="https://' + configPageAddress + '"';
-  return result;
-}
-
 function main() {
   if ( isSyncthingRunning() ) {
     if ( ! Args.Named.Exists("silent") ) {
@@ -81,7 +53,7 @@ function main() {
     var process = GetObject("winmgmts:{impersonationlevel=impersonate}!root/CIMV2:Win32_Process");
     var method = process.Methods_("Create");
     var inParams = method.InParameters.SpawnInstance_();
-    inParams.CommandLine = '"' + FSO.BuildPath(ScriptPath,"syncthing.exe") + '" ' + getParams();
+    inParams.CommandLine = '"' + FSO.BuildPath(ScriptPath,"syncthing.exe") + '" --no-browser';
     inParams.CurrentDirectory = ScriptPath;
     inParams.ProcessStartupInformation = procStartup;
     process.ExecMethod_("Create",inParams);

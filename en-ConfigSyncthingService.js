@@ -3,10 +3,10 @@
 
 // Configures the Syncthing Windows service using NSSM (https://nssm.cc).
 
-// BEGIN MESSAGES
+// BEGIN LOCALIZATION
 var MSG_DLG_TITLE         = "Syncthing";
 var MSG_SERVICE_NOT_EXIST = "The Syncthing service is not installed.";
-// END MESSAGES
+// END LOCALIZATION
 
 // Global Win32 API constants
 var SW_SHOWNORMAL                = 1;

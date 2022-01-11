@@ -3,7 +3,7 @@
 
 - [Listing of Files](#listing-of-files)
 - [Prerequisites](#prerequisites)
-- [Get the Downloads](#get-the-downloads)
+- [Get the Files](#get-the-files)
 - [Extract the Archives](#extract-the-archives)
 - [Compile the Setup Program](#compile-the-setup-program)
 - [Localization](#localization)
@@ -32,13 +32,15 @@ The following table lists all of the files associated with Syncthing Windows Set
 
 * [Inno Setup](https://www.jrsoftware.org/isinfo.php) version 6 or later
 
-## Get the Downloads
+## Get the Files
 
-Download the Syncthing zip files for the appropriate version of Syncthing. For example, the zip files for Syncthing version 1.18.4 are `syncthing-windows-386-v1.18.4.zip` and `syncthing-windows-amd64-v1.18.4.zip`. Copy these zip files into the build directory.
+[Download the project from Github](https://github.com/Bill-Stewart/SyncthingWindowsSetup/archive/refs/heads/main.zip) and extract it into folder of your choice (this folder will be referred to as the "build folder").
+
+Download the Syncthing zip files for the appropriate version of Syncthing. For example, the zip files for Syncthing version 1.18.4 are `syncthing-windows-386-v1.18.4.zip` and `syncthing-windows-amd64-v1.18.4.zip`. Copy these zip files into the build folder.
 
 ## Extract the Archives
 
-From a PowerShell command line, run the `Expand-Download.ps1` script in the build directory. The script uses 7-Zip to extract the Syncthing archive files into a folder structure appropriate for Syncthing.
+From a PowerShell command line, run the `Expand-Download.ps1` script in the build folder. The script uses 7-Zip to extract the Syncthing archive files into a folder structure appropriate for Syncthing.
 
 ## Compile the Setup Program
 
@@ -89,11 +91,12 @@ For example, the following steps describe how to add localization for Dutch (lan
 6. Add a section in `Localization.ini` for the Dutch language code (`nl`) and add the corresponding script file names; e.g.:
 
         [nl]
-        ScriptNameSyncthingFirewallRule=nl-SyncthingFirewallRule.js
         ScriptNameConfigSyncthingService=nl-ConfigSyncthingService.js
-        ScriptNameSyncthingLogonTask=nl-SyncthingLogonTask.js
+        ScriptNameSetSyncthingConfig=nl-SetSyncthingConfig.js
         ScriptNameStartSyncthing=nl-StartSyncthing.js
         ScriptNameStopSyncthing=nl-StopSyncthing.js
+        ScriptNameSyncthingFirewallRule=nl-SyncthingFirewallRule.js
+        ScriptNameSyncthingLogonTask=nl-SyncthingLogonTask.js
 
 7. Increment the `NumLanguages` preprocessor directive in `Syncthing.iss`; e.g.:
 

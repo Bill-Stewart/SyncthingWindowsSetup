@@ -6,11 +6,11 @@
 //   this script
 // * Use the '/silent' command line parameter to suppress dialogs
 
-// BEGIN MESSAGES
+// BEGIN LOCALIZATION
 var MSG_DLG_TITLE   = "Syncthing";
 var MSG_PROMPT      = "Stop Syncthing?";
 var MSG_NOT_RUNNING = "Syncthing is not running.";
-// END MESSAGES
+// END LOCALIZATION
 
 // Global message box constants
 var MB_YESNO           = 0x04;
