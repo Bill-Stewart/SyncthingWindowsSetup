@@ -15,6 +15,7 @@
 #define AppVersion GetStringFileInfo("bin\amd64\syncthing.exe",PRODUCT_VERSION)
 #define AppPublisher "Syncthing Foundation"
 #define AppURL "https://syncthing.net/"
+#define SetupVersion AppVersion + ".2"
 #define ServiceName "syncthing"
 #define ServiceStopTimeout "10000"
 #define DefaultAutoUpgradeInterval "12"
@@ -56,7 +57,8 @@ UninstallFilesDir={app}\uninstall
 UninstallDisplayIcon={app}\syncthing.exe,0
 VersionInfoProductName={#AppName}
 VersionInfoCompany={#AppPublisher}
-VersionInfoVersion={#AppVersion}
+VersionInfoProductVersion={#AppVersion}
+VersionInfoVersion={#SetupVersion}
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"
@@ -116,7 +118,7 @@ Filename: "{app}\{#ConfigurationPageName}.url"; Section: "InternetShortcut"; Key
 Filename: "{app}\{#ConfigurationPageName}.url"; Section: "InternetShortcut"; Key: "IconIndex"; String: "0"
 
 [Tasks]
-Name: startatboot;  Description: "{cm:TasksStartAtBoot}";  Check: IsAdminInstallMode()
+Name: startatboot;  Description: "{cm:TasksStartAtBoot}";  Check: IsAdminInstallMode() and (not ServiceExists())
 Name: startatlogon; Description: "{cm:TasksStartAtLogon}"; Check: (not IsAdminInstallMode()) and (not LogonTaskExists())
 
 [Run]

@@ -23,21 +23,22 @@ var FSO          = new ActiveXObject("Scripting.FileSystemObject");
 var WshShell     = new ActiveXObject("WScript.Shell");
 var SWbemService = GetObject("winmgmts:{impersonationlevel=impersonate}!root/CIMV2");
 // Global variables
-var ScriptPath               = WScript.ScriptFullName.substring(0,WScript.ScriptFullName.length - WScript.ScriptName.length);
-var DefaultConfigPageAddress = "127.0.0.1:8384";
+var ScriptPath = WScript.ScriptFullName.substring(0,WScript.ScriptFullName.length - WScript.ScriptName.length);
 
 function isSyncthingRunning() {
+  var result = false;
   var path = ScriptPath.replace(/\\/g,'\\\\');
-  var wqlQuery = 'SELECT Name FROM Win32_Process '
+  var wqlQuery = 'SELECT Name,ProcessId FROM Win32_Process '
     + 'WHERE ExecutablePath LIKE "' + path + '%"';
   var procColl = new Enumerator(SWbemService.ExecQuery(wqlQuery));
-  var procCount = 0;
   for ( ; ! procColl.atEnd(); procColl.moveNext() ) {
-    if ( procColl.item().Name.toLowerCase() == "syncthing.exe" ) {
-      procCount++;
+    var process = procColl.item();
+    result = process.Name.toLowerCase() == "syncthing.exe";
+    if ( result ) {
+      break;
     }
   }
-  return procCount > 0;
+  return result;
 }
 
 function main() {

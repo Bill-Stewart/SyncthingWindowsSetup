@@ -2,6 +2,14 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.18.6.2 (2022-01-12)
+
+* Fix: Configuration wasn't being generated correctly for Windows service.
+
+* Fix: Don't show `startatboot` task if service is already installed.
+
+* Improved: `StopSyncthing.js` uses CLI command (`syncthing cli operations shutdown`) to stop Syncthing.
+
 ## 1.18.6 (2022-01-11)
 
 > NOTE: If you installed Syncthing 1.18.5 using Setup, it is recommended to uninstall it first before installing 1.18.6 or any newer version. This is recommended due to the improved way that Setup handles configuration settings in 1.18.6 and newer.

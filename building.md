@@ -36,7 +36,7 @@ The following table lists all of the files associated with Syncthing Windows Set
 
 [Download the project from Github](https://github.com/Bill-Stewart/SyncthingWindowsSetup/archive/refs/heads/main.zip) and extract it into folder of your choice (this folder will be referred to as the "build folder").
 
-Download the Syncthing zip files for the appropriate version of Syncthing. For example, the zip files for Syncthing version 1.18.4 are `syncthing-windows-386-v1.18.4.zip` and `syncthing-windows-amd64-v1.18.4.zip`. Copy these zip files into the build folder.
+Download the Syncthing zip files for the appropriate version of Syncthing. For example, the zip files for Syncthing version 1.18.6 are `syncthing-windows-386-v1.18.6.zip` and `syncthing-windows-amd64-v1.18.6.zip`. Copy these zip files into the build folder.
 
 ## Extract the Archives
 

@@ -31,50 +31,36 @@ function query(message) {
   return response == IDYES;  // user clicked Yes
 }
 
-// Gets array of process IDs of processes running from this script's directory
-function getProcessIDs() {
+function isSyncthingRunning() {
+  var result = false;
   var path = ScriptPath.replace(/\\/g,'\\\\');
   var wqlQuery = 'SELECT Name,ProcessId FROM Win32_Process '
     + 'WHERE ExecutablePath LIKE "' + path + '%"';
   var procColl = new Enumerator(SWbemService.ExecQuery(wqlQuery));
-  var processIDs = [];
   for ( ; ! procColl.atEnd(); procColl.moveNext() ) {
     var process = procColl.item();
-    if ( process.Name.toLowerCase() == "syncthing.exe" ) {
-      processIDs.push(process.processId);
+    result = process.Name.toLowerCase() == "syncthing.exe";
+    if ( result ) {
+      break;
     }
   }
-  return processIDs;
+  return result;
 }
 
-// Terminates process IDs passed in processIDs array
-function terminateProcesses(processIDs) {
-  var wqlQuery = 'SELECT Name FROM Win32_Process WHERE ((ProcessId='
-    + processIDs[0].toString() + ')';
-  for ( var i = 1; i < processIDs.length; i++ ) {
-    wqlQuery += ' OR (ProcessId=' + processIDs[i].toString() + ')';
-  }
-  wqlQuery += ')';
-  var procColl = new Enumerator(SWbemService.ExecQuery(wqlQuery));
-  for ( ; ! procColl.atEnd(); procColl.moveNext() ) {
-    try {
-      procColl.item().Terminate();
-    }
-    catch(err) {
-    }
-  }
+function stopSyncthing() {
+  var executablePath = FSO.BuildPath(ScriptPath,"syncthing.exe");
+  return WshShell.Run('"' + executablePath + '" cli operations shutdown',0,true);
 }
 
 function main() {
-  var processIDs = getProcessIDs();
-  if ( processIDs.length == 0 ) {
+  if ( ! isSyncthingRunning() ) {
     if ( ! Args.Named.Exists("silent") ) {
       WshShell.Popup(MSG_NOT_RUNNING,0,MSG_DLG_TITLE,MB_ICONINFORMATION);
     }
   }
   else {
     if ( Args.Named.Exists("silent") || query(MSG_PROMPT) ) {
-      terminateProcesses(processIDs);
+      return stopSyncthing();
     }
   }
 }
