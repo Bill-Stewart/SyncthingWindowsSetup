@@ -2,6 +2,10 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.18.6.3 (2021-01-13)
+
+* Fix: Setup looks up localized account name for `NT AUTHORITY\LOCAL SERVICE` when installing service.
+
 ## 1.18.6.2 (2022-01-12)
 
 * Fix: Configuration wasn't being generated correctly for Windows service.

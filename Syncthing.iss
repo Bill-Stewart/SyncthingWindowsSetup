@@ -15,7 +15,7 @@
 #define AppVersion GetStringFileInfo("bin\amd64\syncthing.exe",PRODUCT_VERSION)
 #define AppPublisher "Syncthing Foundation"
 #define AppURL "https://syncthing.net/"
-#define SetupVersion AppVersion + ".2"
+#define SetupVersion AppVersion + ".3"
 #define ServiceName "syncthing"
 #define ServiceStopTimeout "10000"
 #define DefaultAutoUpgradeInterval "12"
@@ -199,6 +199,20 @@ begin
         result := Copy(OutStr, 1, NumChars);
     end;
   except
+  end;
+end;
+
+function GetLocalServiceUserName(): string;
+var
+  SWbemLocator, WMIService, SID: Variant;
+begin
+  try
+    SWbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
+    WMIService := SWbemLocator.ConnectServer('', 'root\CIMV2');
+    SID := WMIService.Get('Win32_SID.SID=''S-1-5-19''');
+    result := SID.ReferencedDomainName + '\' + SID.AccountName;
+  except
+    result := 'NT Authority\LocalService';
   end;
 end;
 
@@ -493,7 +507,7 @@ begin
     Params := ExpandConstant('set "{#ServiceName}" Description "{cm:ServiceDescription}"');
     ExecEx(FileName, Params, true);
     // set ObjectName
-    Params := 'set "{#ServiceName}" ObjectName "NT AUTHORITY\LOCAL SERVICE"';
+    Params := 'set "{#ServiceName}" ObjectName "' + GetLocalServiceUserName() + '"';
     ExecEx(FileName, Params, true);
     // set AppPriority
     Params := 'set "{#ServiceName}" AppPriority BELOW_NORMAL_PRIORITY_CLASS';
