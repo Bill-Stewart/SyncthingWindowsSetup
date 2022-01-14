@@ -15,7 +15,7 @@
 #define AppVersion GetStringFileInfo("bin\amd64\syncthing.exe",PRODUCT_VERSION)
 #define AppPublisher "Syncthing Foundation"
 #define AppURL "https://syncthing.net/"
-#define SetupVersion AppVersion + ".3"
+#define SetupVersion AppVersion + ".4"
 #define ServiceName "syncthing"
 #define ServiceStopTimeout "10000"
 #define DefaultAutoUpgradeInterval "12"
