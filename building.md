@@ -1,4 +1,4 @@
-<!-- omit in toc -->
+﻿<!-- omit in toc -->
 # Building Syncthing Windows Setup
 
 - [Listing of Files](#listing-of-files)
@@ -59,6 +59,8 @@ To add additional language support to Setup, do the following:
 4. Copy each `en-`_scriptname_`.js` script to _lang_`-`_scriptname_`.js` (where _lang_ is the language you want to add).
 
 5. Edit the messages at the top of each _lang_`-`_scriptname_`.js` script such that the messages are appropriate for the language.
+
+    > NOTE: If the messages do not display correctly when the scripts run, it may be an encoding problem. Try saving the scripts using UTF-16 LE (little endian) encoding.
 
 6. In the `Localization.ini` file, add a section for the language, and specify the source file names you want to use for the language.
 

@@ -18,11 +18,12 @@ var MSG_CONFIG_NOT_UPDATED      = "Unable to update config.xml";
 // LOCAL SERVICE root profile path inside SystemRoot
 var LOCALSERVICE_PROFILE_PATH = "ServiceProfiles\\LocalService";
 
-// Global Win32 API constants
+// Global Windows API constants
+var SW_HIDE              = 0;
 var ERROR_FILE_NOT_FOUND = 2;
 var ERROR_ALREADY_EXISTS = 183;
 var MB_ICONERROR         = 0x10;
-// Shell.Application constants
+// Global Shell.Application constants
 var ssfLOCALAPPDATA = 28;
 var ssfWINDOWS      = 36;
 // Global objects
@@ -126,7 +127,7 @@ function main() {
       cmdLine += ' --no-default-folder';
     }
     // Generate configuration (current user)
-    WshShell.Run(cmdLine,0,true);
+    WshShell.Run(cmdLine,SW_HIDE,true);
     if ( ! FSO.FileExists(currentUserConfigFileName) ) {
       if ( ! Args.Named.Exists("silent") ) {
         WshShell.Popup(MSG_CONFIG_NOT_FOUND + "\n\n" + currentUserConfigFileName,0,MSG_DLG_TITLE,MB_ICONERROR);

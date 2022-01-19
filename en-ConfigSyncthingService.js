@@ -8,7 +8,7 @@ var MSG_DLG_TITLE         = "Syncthing";
 var MSG_SERVICE_NOT_EXIST = "The Syncthing service is not installed.";
 // END LOCALIZATION
 
-// Global Win32 API constants
+// Global Windows API constants
 var SW_SHOWNORMAL                = 1;
 var MB_ICONERROR                 = 0x10;
 var ERROR_SERVICE_DOES_NOT_EXIST = 1060;
@@ -39,7 +39,7 @@ function main() {
   var result = 0;
   var serviceName = getServiceName();
   if ( serviceName != "" ) {
-    WshShell.Run('"' + FSO.BuildPath(ScriptPath,"nssm.exe") + '" edit "' + serviceName + '"',1,false);
+    WshShell.Run('"' + FSO.BuildPath(ScriptPath,"nssm.exe") + '" edit "' + serviceName + '"',SW_SHOWNORMAL,false);
   }
   else {
     if ( ! Args.Named.Exists("silent") ) {

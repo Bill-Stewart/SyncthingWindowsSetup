@@ -12,7 +12,8 @@ var MSG_PROMPT      = "Stop Syncthing?";
 var MSG_NOT_RUNNING = "Syncthing is not running.";
 // END LOCALIZATION
 
-// Global message box constants
+// Global Windows API constants
+var SW_HIDE            = 0;
 var MB_YESNO           = 0x04;
 var MB_ICONERROR       = 0x10;
 var MB_ICONQUESTION    = 0x20;
@@ -49,7 +50,7 @@ function isSyncthingRunning() {
 
 function stopSyncthing() {
   var executablePath = FSO.BuildPath(ScriptPath,"syncthing.exe");
-  return WshShell.Run('"' + executablePath + '" cli operations shutdown',0,true);
+  return WshShell.Run('"' + executablePath + '" cli operations shutdown',SW_HIDE,true);
 }
 
 function main() {

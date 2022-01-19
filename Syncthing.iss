@@ -15,7 +15,7 @@
 #define AppVersion GetStringFileInfo("bin\amd64\syncthing.exe",PRODUCT_VERSION)
 #define AppPublisher "Syncthing Foundation"
 #define AppURL "https://syncthing.net/"
-#define SetupVersion AppVersion + ".4"
+#define SetupVersion AppVersion + ".5"
 #define ServiceName "syncthing"
 #define ServiceStopTimeout "10000"
 #define DefaultAutoUpgradeInterval "12"
@@ -202,6 +202,7 @@ begin
   end;
 end;
 
+// Use WMI to get localized 'NT AUTHORITY\LOCAL SERVICE' username
 function GetLocalServiceUserName(): string;
 var
   SWbemLocator, WMIService, SID: Variant;
@@ -426,7 +427,10 @@ end;
 // Requires string param
 function GetListenAddress(Param: string): string;
 begin
-  result := ListenAddress;
+  if (Trim(ListenAddress) = '0.0.0.0') or (Trim(ListenAddress) = '::') then
+    result := '127.0.0.1'
+  else
+    result := ListenAddress;
 end;
 
 // Requires string param
@@ -444,6 +448,8 @@ begin
     result := '/currentuser';
   result := result + ' /autoupgradeinterval:' + AutoUpgradeInterval;
   result := result + ' /guiaddress:"' + ListenAddress + ':' + ListenPort + '"';
+  if WizardSilent() then
+    result := result + ' /silent';
 end;
 
 function GetStartAfterInstall(): Boolean;

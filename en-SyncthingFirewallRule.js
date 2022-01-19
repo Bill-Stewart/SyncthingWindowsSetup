@@ -14,7 +14,8 @@ var MSG_QUERY_REMOVE_RULE    = "Remove Syncthing Windows Firewall rule?";
 var MSG_ERROR_DESC_NOT_FOUND = "(No error description found)";
 // END LOCALIZATION
 
-// Global Win32 API constants
+// Global Windows API constants
+var SW_HIDE                  = 0;
 var ERROR_FILE_NOT_FOUND     = 2;
 var ERROR_ELEVATION_REQUIRED = 740;
 // Global message box constants
@@ -61,7 +62,7 @@ function getErrorDescription(errorCode) {
     " helpmsg " + errorCode.toString() + " > \"" + tempName + "\"";
 
   // Run command (output in temporary file)
-  WshShell.Run(command,0,true);
+  WshShell.Run(command,SW_HIDE,true);
 
   try {
     var textStream = FSO.OpenTextFile(tempName,ForReading);

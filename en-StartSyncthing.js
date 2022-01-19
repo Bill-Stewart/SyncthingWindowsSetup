@@ -12,11 +12,10 @@ var MSG_DLG_TITLE       = "Syncthing";
 var MSG_ALREADY_RUNNING = "Syncthing is already running.";
 // END LOCALIZATION
 
-// Global Win32 API constants
+// Global Windows API constants
 var SW_HIDE                     = 0;
+var MB_ICONINFORMATION          = 0x40;
 var BELOW_NORMAL_PRIORITY_CLASS = 0x4000;
-// Global message box constants
-var MB_ICONINFORMATION = 0x40;
 // Global objects
 var Args         = WScript.Arguments;
 var FSO          = new ActiveXObject("Scripting.FileSystemObject");

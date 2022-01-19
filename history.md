@@ -1,10 +1,22 @@
-# Syncthing Windows Setup Version History
+﻿# Syncthing Windows Setup Version History
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.18.6.5 (2021-01-19)
+
+* Fix: No error dialog from `SetSyncthingConfig.js` script if running silently.
+
+* Fix: If GUI listen address specified as "any" (`0.0.0.0` or `::`), then set `ConfigurationPage.url` to use `127.0.0.1`.
+
+* Minor tweaks.
+
+## 1.18.6.4 (2021-01-14)
+
+* Fixed wrong `SetSyncthingConfig.js` included in build.
+
 ## 1.18.6.3 (2021-01-13)
 
-* Fix: Setup looks up localized account name for `NT AUTHORITY\LOCAL SERVICE` when installing service.
+* Fix: Setup now looks up localized account name for `NT AUTHORITY\LOCAL SERVICE` when installing service.
 
 ## 1.18.6.2 (2022-01-12)
 

@@ -1,4 +1,4 @@
-<!-- omit in toc -->
+﻿<!-- omit in toc -->
 # Syncthing Windows Setup
 
 Syncthing Windows Setup is a lightweight yet full-featured Windows installer for the open-source [Syncthing](https://syncthing.net) file-synchronization application.
@@ -35,6 +35,7 @@ Syncthing Windows Setup is a lightweight yet full-featured Windows installer for
   - [Silent Administrative (All Users) Installation](#silent-administrative-all-users-installation)
   - [Silent Non Administrative (Current User) Installation](#silent-non-administrative-current-user-installation)
   - [Silent Uninstall](#silent-uninstall)
+- [Reporting Problems](#reporting-problems)
 - [Acknowledgments](#acknowledgments)
 
 ---
@@ -208,14 +209,14 @@ Shortcut                     | Installation Mode | Description
 --------                     | ----------------- | -----------
 FAQ                          | Both              | Opens the 'FAQ' PDF document
 Getting Started              | Both              | Opens the 'Getting Started' PDF document
-Syncthing Configuration Page | Both              | Opens the Syncthing configuration page using the default browser
+Syncthing Configuration Page | Both              | Opens the Syncthing GUI configuration page using the default browser
 Configure Syncthing Service  | All users         | Allows configuration of the Windows service using NSSM (recommended for advanced users only)
 Start Syncthing              | Current user      | Starts Syncthing for the current user in a hidden window
-Stop Syncthing               | Current user      | Stops Syncthing
+Stop Syncthing               | Current user      | Stops the Syncthing instance running for the current user
 
 * The **Syncthing Configuration Page** shortcut opens the `ConfigurationPage.url` file in the Syncthing installation folder (i.e., it opens the Syncthing GUI configuration page).
 
-* The **Configure Syncthing Service** runs the `ConfigSyncthingService.js` script (see [Scripts](#scripts)) to allow modification of the Windows service configuration (recommended for advanced users only). This shortcut is installed only in administrative (all users) installation mode.
+* The **Configure Syncthing Service** shortcut runs the `ConfigSyncthingService.js` script (see [Scripts](#scripts)) to allow modification of the Windows service configuration (recommended for advanced users only). This shortcut is installed only in administrative (all users) installation mode.
 
 * The **Start Syncthing** and **Stop Syncthing** shortcuts run the `StartSyncthing.js` and `StopSyncthing.js` scripts, respectively (see [Scripts](#scripts)). These shortcuts are installed only in non administrative (current user) mode.
 
@@ -380,6 +381,16 @@ To ensure Syncthing works correctly after a non administrative (current user) si
 To uninstall silently, specify `/silent` on the uninstaller's command line (the uninstaller executable is located in the `uninstall` directory inside the Syncthing installation folder).
 
 If you installed Syncthing for the current user, you will need to remove the firewall rule manually (see [Removing the Firewall Rule Manually](#removing-the-firewall-rule-manually)) before uninstalling.
+
+## Reporting Problems
+
+If you encounter a problem with Setup or one of the scripts, please inform the author by filing an issue on the Issues page:
+
+https://github.com/Bill-Stewart/SyncthingWindowsSetup/issues
+
+For Syncthing support (not related to Setup or the scripts), please visit the Syncthing forum:
+
+https://forum.syncthing.net/
 
 ## Acknowledgments
 
