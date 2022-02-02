@@ -2,6 +2,10 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.19.0 (2021-02-02)
+
+* `SetSyncthingConfig.js` no longer requires firewall rule (thanks to Syncthing maintainers for adding `--skip-port-probing` option).
+
 ## 1.18.6.5 (2021-01-19)
 
 * Fix: No error dialog from `SetSyncthingConfig.js` script if running silently.

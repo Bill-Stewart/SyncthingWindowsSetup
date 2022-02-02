@@ -2,14 +2,13 @@
 // Written by Bill Stewart (bstewart AT iname.com) for Syncthing
 
 // Notes:
-// * Generate config.xml if doesn't exist (firewall rule must already exist)
+// * Generate config.xml if doesn't exist
 // * If generating config for service, copy generated folder
 // * Set config.xml options requested by parameters
 // * Disable config.xml setLowPriority option
 
 // BEGIN LOCALIZATION
 var MSG_DLG_TITLE               = "Syncthing";
-var MSG_FIREWALL_RULE_NOT_FOUND = "Firewall rule not found";
 var MSG_SYNCTHING_NOT_FOUND     = "syncthing.exe not found";
 var MSG_CONFIG_NOT_FOUND        = "File not found:";
 var MSG_CONFIG_NOT_UPDATED      = "Unable to update config.xml";
@@ -29,7 +28,6 @@ var ssfWINDOWS      = 36;
 // Global objects
 var Args           = WScript.Arguments;
 var FSO            = new ActiveXObject("Scripting.FileSystemObject");
-var NetFWPolicy2   = new ActiveXObject("HNetCfg.FWPolicy2");
 var ShellApp       = new ActiveXObject("Shell.Application");
 var WshShell       = new ActiveXObject("WScript.Shell");
 var XMLDOMDocument = new ActiveXObject("Microsoft.XMLDOM");
@@ -41,22 +39,6 @@ var LocalServiceAppDataPath = FSO.BuildPath(FSO.BuildPath(ShellApp.NameSpace(ssf
 
 function help() {
   WScript.Echo("Usage: " + WScript.ScriptName + " {/currentuser|/localservice} <settings> [/silent]");
-}
-
-function firewallRuleExists(executablePath) {
-  var result = false;
-  try {
-    var netFWRules = new Enumerator(NetFWPolicy2.Rules);
-    for ( ; ! netFWRules.atEnd(); netFWRules.moveNext() ) {
-      result = netFWRules.item().ApplicationName.toLowerCase() == executablePath.toLowerCase();
-      if ( result ) {
-        break;
-      }
-    }
-  }
-  catch(err) {
-  }
-  return result;
 }
 
 function paramIsEmpty(paramName) {
@@ -108,21 +90,13 @@ function main() {
 
   if ( generate ) {
     var syncthingPath = FSO.BuildPath(ScriptPath,"syncthing.exe");
-    // syncthing.exe chats on network, so abort if we can't find a firewall
-    // rule for it (avoids Windows prompt to create firewall rules)
-    if ( ! firewallRuleExists(syncthingPath) ) {
-      if ( ! Args.Named.Exists("silent") ) {
-        WshShell.Popup(MSG_FIREWALL_RULE_NOT_FOUND,0,MSG_DLG_TITLE,MB_ICONERROR);
-      }
-      return ERROR_FILE_NOT_FOUND;
-    }
     if ( ! FSO.FileExists(syncthingPath) ) {
       if ( ! Args.Named.Exists("silent") ) {
         WshShell.Popup(MSG_SYNCTHING_NOT_FOUND,0,MSG_DLG_TITLE,MB_ICONERROR);
       }
       return ERROR_FILE_NOT_FOUND;
     }
-    var cmdLine = '"' + syncthingPath + '" generate';
+    var cmdLine = '"' + syncthingPath + '" generate --skip-port-probing';
     if ( ! defaultFolder ) {
       cmdLine += ' --no-default-folder';
     }

@@ -2,8 +2,7 @@
 // Written by Bill Stewart (bstewart AT iname.com) for Syncthing
 
 // Notes:
-// * Stops syncthing.exe processes that were started from the same directory as
-//   this script
+// * Stops Syncthing if it was started from the same directory as this script
 // * Use the '/silent' command line parameter to suppress dialogs
 
 // BEGIN LOCALIZATION
