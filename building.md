@@ -12,19 +12,21 @@
 
 The following table lists all of the files associated with Syncthing Windows Setup (hereafter referred to as "Setup").
 
-| Folder or File             | Description
-| --------------             | -----------
-| `bin`                      | Folder contains 32-bit and 64-bit Syncthing binaries
-| `nssm`                     | Folder contains 32-bit and 64-bit [NSSM](https://nssm.cc) binaries
-| `redist`                   | Folder contains other files from the Syncthing download archive
-| `building.md`              | This file
-| `LICENSE`                  | License agreement for Setup and its associated files
-| `Expand-Download.ps1`      | PowerShell script that extracts the Syncthing Windows download zip files to the correct paths for building Setup
-| _lang_`-`_scriptname_`.js` | Setup installs one or more of these scripts on the user's system
-| `README.md`                | Setup documentation
-| `Syncthing.iss`            | Inno Setup reads this file and builds Setup
-| `Localization.ini`         | Facilitates localization of the script files (see [Localization](#localization))
-| `Messages-en.isl`          | Setup messages file (see [Localization](#localization))
+| Folder or File                 | Description
+| --------------                 | -----------
+| `bin`                          | Folder contains 32-bit and 64-bit Syncthing binaries
+| `nssm`                         | Folder contains 32-bit and 64-bit [NSSM](https://nssm.cc) binaries
+| `startps`                      | Folder contains 32-bit and 64-bit `startps.exe` binaries
+| `redist`                       | Folder contains other files from the Syncthing download archive
+| `building.md`                  | This file
+| `LICENSE`                      | License agreement for Setup and its associated files
+| `Expand-Download.ps1`          | PowerShell script that extracts the Syncthing Windows download zip files to the correct paths for building Setup
+| `Install-SyncthingService.ps1` | PowerShell script that installs the service's local user account and the Windows service
+| _lang_`-`_scriptname_`.js`     | Setup installs one or more of these WSH scripts on the user's system
+| `README.md`                    | Setup documentation
+| `Syncthing.iss`                | Inno Setup reads this file and builds Setup
+| `Localization.ini`             | Facilitates localization of the script files (see [Localization](#localization))
+| `Messages-en.isl`              | Setup messages file (see [Localization](#localization))
 
 ## Prerequisites
 
@@ -36,7 +38,7 @@ The following table lists all of the files associated with Syncthing Windows Set
 
 [Download the project from Github](https://github.com/Bill-Stewart/SyncthingWindowsSetup/archive/refs/heads/main.zip) and extract it into folder of your choice (this folder will be referred to as the "build folder").
 
-Download the Syncthing zip files for the appropriate version of Syncthing. For example, the zip files for Syncthing version 1.18.6 are `syncthing-windows-386-v1.18.6.zip` and `syncthing-windows-amd64-v1.18.6.zip`. Copy these zip files into the build folder.
+Download the Syncthing zip files for the appropriate version of Syncthing. For example, the zip files for Syncthing version 1.19.2 are `syncthing-windows-386-v1.19.2.zip` and `syncthing-windows-amd64-v1.19.2.zip`. Copy these zip files into the build folder.
 
 ## Extract the Archives
 

@@ -47,6 +47,7 @@ function main() {
     }
     result = ERROR_SERVICE_DOES_NOT_EXIST;
   }
+  return result;
 }
 
 WScript.Quit(main());

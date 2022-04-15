@@ -3,19 +3,15 @@
 
 // Notes:
 // * Generate config.xml if doesn't exist
-// * If generating config for service, copy generated folder
 // * Set config.xml options requested by parameters
 // * Disable config.xml setLowPriority option
 
 // BEGIN LOCALIZATION
-var MSG_DLG_TITLE               = "Syncthing";
-var MSG_SYNCTHING_NOT_FOUND     = "syncthing.exe not found";
-var MSG_CONFIG_NOT_FOUND        = "File not found:";
-var MSG_CONFIG_NOT_UPDATED      = "Unable to update config.xml";
+var MSG_DLG_TITLE           = "Syncthing";
+var MSG_SYNCTHING_NOT_FOUND = "syncthing.exe not found";
+var MSG_CONFIG_NOT_FOUND    = "File not found:";
+var MSG_CONFIG_NOT_UPDATED  = "Unable to update config.xml";
 // END LOCALIZATION
-
-// LOCAL SERVICE root profile path inside SystemRoot
-var LOCALSERVICE_PROFILE_PATH = "ServiceProfiles\\LocalService";
 
 // Global Windows API constants
 var SW_HIDE              = 0;
@@ -23,8 +19,8 @@ var ERROR_FILE_NOT_FOUND = 2;
 var ERROR_ALREADY_EXISTS = 183;
 var MB_ICONERROR         = 0x10;
 // Global Shell.Application constants
-var ssfLOCALAPPDATA = 28;
-var ssfWINDOWS      = 36;
+var ssfLOCALAPPDATA  = 0x1C;
+var ssfCOMMONAPPDATA = 0x23;
 // Global objects
 var Args           = WScript.Arguments;
 var FSO            = new ActiveXObject("Scripting.FileSystemObject");
@@ -32,61 +28,40 @@ var ShellApp       = new ActiveXObject("Shell.Application");
 var WshShell       = new ActiveXObject("WScript.Shell");
 var XMLDOMDocument = new ActiveXObject("Microsoft.XMLDOM");
 // Global variables
-var ScriptPath              = WScript.ScriptFullName.substring(0,WScript.ScriptFullName.length - WScript.ScriptName.length);
-var CurrentUserAppDataPath  = ShellApp.NameSpace(ssfLOCALAPPDATA).Self.Path;
-var LocalizedAppDataPath    = FSO.BuildPath(FSO.GetFileName(FSO.GetParentFolderName(CurrentUserAppDataPath)),FSO.GetFileName(CurrentUserAppDataPath));
-var LocalServiceAppDataPath = FSO.BuildPath(FSO.BuildPath(ShellApp.NameSpace(ssfWINDOWS).Self.Path,LOCALSERVICE_PROFILE_PATH),LocalizedAppDataPath);
+var ScriptPath = WScript.ScriptFullName.substring(0,WScript.ScriptFullName.length - WScript.ScriptName.length);
 
 function help() {
-  WScript.Echo("Usage: " + WScript.ScriptName + " {/currentuser|/localservice} <settings> [/silent]");
+  WScript.Echo("Usage: " + WScript.ScriptName + " {/currentuser|/service} <settings> [/silent]");
 }
 
 function paramIsEmpty(paramName) {
   return (Args.Named.Item(paramName) == "") || (Args.Named.Item(paramName) == null);
 }
 
-function copyFolder(source,destination) {
-  result = 0;
-  if ( destination.charAt(destination.length - 1) != "\\" ) {
-    destination += "\\";
-  }
-  try {
-    FSO.CopyFolder(source,destination,false);
-  }
-  catch(err) {
-    result = err.number;
-  }
-  return result;
-}
-
 function main() {
-  var currentUserConfigDir = FSO.BuildPath(CurrentUserAppDataPath,"Syncthing");
-  var currentUserConfigFileName = FSO.BuildPath(currentUserConfigDir,"config.xml");
-  var localServiceConfigDir = FSO.BuildPath(LocalServiceAppDataPath,"Syncthing");
-  var localServiceConfigFileName = FSO.BuildPath(localServiceConfigDir,"config.xml");
-
-  // Following depend on /currentuser or /localservice parameter
-  var configFileName = null;         // Path/filename of config.xml
-  var copyCurrentUserConfig = null;  // Copy current user config to service?
-  var defaultFolder = null;          // Add default folder to config?
-  var generate = null;               // Need to generate config.xml?
+  // Following depend on /currentuser or /service parameter
+  var configPath = null;      // Syncthing config file path
+  var defaultFolder = null;   // Add default folder to config?
+  var configFileName = null;  // Path/filename of config.xml
+  var generate = null;        // Need to generate config.xml?
 
   if ( Args.Named.Exists("currentuser") ) {
-    configFileName = currentUserConfigFileName;
-    copyCurrentUserConfig = false;
+    var currentUserLocalAppDataPath = ShellApp.NameSpace(ssfLOCALAPPDATA).Self.Path;
+    configPath = FSO.BuildPath(currentUserLocalAppDataPath,"Syncthing");
     defaultFolder = true;
-    generate = ! FSO.FileExists(currentUserConfigFileName);
   }
-  else if ( Args.Named.Exists("localservice") ) {
-    configFileName = localServiceConfigFileName;
-    copyCurrentUserConfig = true;
+  else if ( Args.Named.Exists("service") ) {
+    var commonAppDataPath = ShellApp.nameSpace(ssfCOMMONAPPDATA).Self.Path;
+    configPath = FSO.BuildPath(commonAppDataPath,"Syncthing");
     defaultFolder = false;
-    generate = ! FSO.FileExists(localServiceConfigFileName);
   }
   else {
     help();
     return;
   }
+
+  configFileName = FSO.BuildPath(configPath,"config.xml");
+  generate = ! FSO.FileExists(configFileName);
 
   if ( generate ) {
     var syncthingPath = FSO.BuildPath(ScriptPath,"syncthing.exe");
@@ -96,29 +71,19 @@ function main() {
       }
       return ERROR_FILE_NOT_FOUND;
     }
-    var cmdLine = '"' + syncthingPath + '" generate --skip-port-probing';
+    var cmdLine = '"' + syncthingPath + '" generate --skip-port-probing --home="' + configPath + '"';
     if ( ! defaultFolder ) {
       cmdLine += ' --no-default-folder';
     }
-    // Generate configuration (current user)
+    // Generate configuration
     WshShell.Run(cmdLine,SW_HIDE,true);
-    if ( ! FSO.FileExists(currentUserConfigFileName) ) {
+    // Fail if not found
+    if ( ! FSO.FileExists(configFileName) ) {
       if ( ! Args.Named.Exists("silent") ) {
-        WshShell.Popup(MSG_CONFIG_NOT_FOUND + "\n\n" + currentUserConfigFileName,0,MSG_DLG_TITLE,MB_ICONERROR);
+        WshShell.Popup(MSG_CONFIG_NOT_FOUND + "\n\n" + configFileName,0,MSG_DLG_TITLE,MB_ICONERROR);
       }
       return ERROR_FILE_NOT_FOUND;
     }
-    // Copy current user configuration to LOCAL SERVICE config
-    if ( copyCurrentUserConfig ) {
-      copyFolder(currentUserConfigDir,FSO.GetParentFolderName(localServiceConfigDir));
-    }
-  }
-
-  if ( ! FSO.FileExists(configFileName) ) {
-    if ( ! Args.Named.Exists("silent") ) {
-      WshShell.Popup(MSG_CONFIG_NOT_FOUND + "\n\n" + configFileName,0,MSG_DLG_TITLE,MB_ICONERROR);
-    }
-    return ERROR_FILE_NOT_FOUND;
   }
 
   // Set configuration options
