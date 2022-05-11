@@ -2,6 +2,10 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.20.1 (2022-05-11)
+
+* Setup built using Inno Setup 6.2.1.
+
 ## 1.19.2 (2022-04-14)
 
 * For improved security, administrative installation mode now configures the service to run using a local user account (by default, **SyncthingServiceAcct**) rather than the **LocalService** account. As a part of this change, the Syncthing configuration data is now located in the _CommonAppData_`\Syncthing` folder (e.g., `C:\ProgramData\Syncthing`).
