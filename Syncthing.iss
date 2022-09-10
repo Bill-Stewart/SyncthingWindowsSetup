@@ -751,8 +751,8 @@ begin
   begin
     if IsAdminInstallMode() then
     begin
-      SetAppDirectoryPermissions();
       InstallOrResetService();
+      SetAppDirectoryPermissions();
       if LocalServiceConfigMigrationNeeded() then
       begin
         if MigrateLocalServiceConfig() then

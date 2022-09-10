@@ -2,6 +2,10 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.21.0 (2022-09-10)
+
+* In 1.20.1 and older, Syncthing automatic upgrades might not work for new installations until after a reinstall. (This was because the installer was resetting the permissions of the installation folder before creating the service account.) This is now fixed.
+
 ## 1.20.1 (2022-05-11)
 
 * Setup built using Inno Setup 6.2.1.
