@@ -63,7 +63,7 @@ VersionInfoProductVersion={#AppVersion}
 VersionInfoVersion={#SetupVersion}
 
 [Languages]
-Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"
+Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; LicenseFile: "License-en.rtf"
 
 ; See building.md file for localization details
 #define protected LocalizationFile AddBackslash(SourcePath) + "Localization.ini"
@@ -213,6 +213,7 @@ Filename: "{sys}\cscript.exe"; \
 
 [UninstallDelete]
 Type: files; Name: "{app}\{#ConfigurationPageName}.url"
+Type: files; Name: "{app}\syncthing.exe.old"
 
 [Code]
 const
@@ -359,6 +360,7 @@ begin
   ConfigPage.Values[0] := AutoUpgradeInterval;
   ConfigPage.Values[1] := ListenAddress;
   ConfigPage.Values[2] := ListenPort;
+  WizardForm.LicenseAcceptedRadio.Checked := true;
 end;
 
 function InitializeUninstall(): Boolean;
