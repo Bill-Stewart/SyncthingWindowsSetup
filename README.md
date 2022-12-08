@@ -52,7 +52,7 @@ https://github.com/Bill-Stewart/SyncthingWindowsSetup/releases/
 
 Syncthing Windows Setup (herein referred to as "Setup") provides a [Syncthing](https://syncthing.net/) installer for Windows, built using [Inno Setup](https://www.jrsoftware.org/isinfo.php). It provides the following features:
 
-* Installs the appropriate 32-bit or 64-bit version of Syncthing using a single installer
+* Installs the appropriate Windows platform (AMD64, etc.) version of Syncthing using a single installer
 
 * Supports administrative (all users) and non administrative (current user) installation (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode))
 
@@ -134,7 +134,7 @@ The following notes apply to administrative (all users) installation mode:
 
 * By default, Syncthing starts automatically when the system boots (you can change this by deselecting the checkbox on the **Select Additional Tasks** wizard page)
 
-* Syncthing runs as a service in the background and synchronizes folders even when no users are logged on
+* Syncthing runs as a service and synchronizes folders even when no users are logged on
 
 * Starting and stopping Syncthing is managed by stopping and starting the Windows service
 
@@ -156,7 +156,7 @@ The following notes apply to non administrative (current user) installation mode
 
 * Setup does not install Syncthing as a Windows service
 
-* By default, Setup creates a scheduled task that starts Syncthing in a hidden window when the current user logs on (you can change this by deselecting the checkbox on the **Select Additional Tasks** wizard page)
+* By default, Setup creates a scheduled task that starts Syncthing in the background when the current user logs on (you can change this by deselecting the checkbox on the **Select Additional Tasks** wizard page)
 
 * Syncthing runs only when the installing user logs on
 
@@ -205,7 +205,7 @@ If the computer is joined to a domain, be aware that Group Policy Object (GPO) s
 
 ## Granting Folder Permissions for the Service Account
 
-In administrative (all users) installation mode, Syncthing runs in the background as a Windows service using a local service user account (**SyncthingServiceAcct** by default). Normally the local service user account does not have permissions to folders you want to synchronize using Syncthing. This means you must grant the local service user account "Modify" permissions to any folders specified in the Syncthing configuration.
+In administrative (all users) installation mode, Syncthing as a Windows service using a local service user account (**SyncthingServiceAcct** by default). Normally the local service user account does not have permissions to folders you want to synchronize using Syncthing. This means you must grant the local service user account "Modify" permissions to any folders specified in the Syncthing configuration.
 
 You can grant the local service user account "Modify" permissions to a folder using the Windows File Explorer. Alternatively, you can run the **icacls** command from the command line; e.g.:
 
@@ -234,11 +234,9 @@ Setup creates the following Start Menu shortcuts, depending on the [installation
 
 Shortcut                     | Installation Mode | Description
 --------                     | ----------------- | -----------
-FAQ                          | Both              | Opens the 'FAQ' PDF document
-Getting Started              | Both              | Opens the 'Getting Started' PDF document
 Syncthing Configuration Page | Both              | Opens the Syncthing GUI configuration page using the default browser
 Configure Syncthing Service  | All users         | Allows configuration of the Windows service using NSSM (recommended for advanced users only)
-Start Syncthing              | Current user      | Starts Syncthing for the current user in a hidden window
+Start Syncthing              | Current user      | Starts Syncthing in the background for the current user
 Stop Syncthing               | Current user      | Stops the Syncthing instance running for the current user
 
 * The **Syncthing Configuration Page** shortcut opens the `ConfigurationPage.url` file in the Syncthing installation folder (i.e., it opens the Syncthing GUI configuration page).
@@ -358,7 +356,7 @@ Script                         | Installation Mode        | Description
 `Install-SyncthingService.ps1` | All users (admin)        | Setup uses this script to install or reset the Syncthing service
 `ConfigSyncthingService.js`    | All users (admin)        | Displays the NSSM service configuration dialog (prompts for administrative permissions if required)
 `SyncthingLogonTask.js`        | Current user (non admin) | Adds or removes a scheduled task that runs the `StartSyncthing.js` script at logon
-`StartSyncthing.js`            | Current user (non admin) | Starts Syncthing for the current user using "below normal" process priority in a hidden window
+`StartSyncthing.js`            | Current user (non admin) | Starts Syncthing in the background for the current user using "below normal" process priority
 `StopSyncthing.js`             | Current user (non admin) | Stops Syncthing
 
 ## Finding the Syncthing Configuration Folder
@@ -381,7 +379,7 @@ The location of the Syncthing configuration folder depends on whether you run Se
 
 ## Uninstalling Syncthing
 
-You can uninstall Syncthing using the standard Windows application management list. The uninstall process does not remove any files Setup did not install.
+You can uninstall Syncthing using the standard Windows application management list.
 
 If you installed Syncthing in non administrative installation mode (current user only), the uninstall process prompts to remove the Syncthing firewall rule if it exists (this requires administrative credentials).
 

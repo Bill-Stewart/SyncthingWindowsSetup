@@ -38,7 +38,7 @@ AppPublisher={#AppPublisher}
 AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesInstallIn64BitMode=x64 arm64
 CloseApplications=yes
 CloseApplicationsFilter=*.exe,*.pdf
 RestartApplications=yes
@@ -63,7 +63,7 @@ VersionInfoProductVersion={#AppVersion}
 VersionInfoVersion={#SetupVersion}
 
 [Languages]
-Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; LicenseFile: "License-en.rtf"
+Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; InfoBeforeFile: "License-en.rtf"
 
 ; See building.md file for localization details
 #define protected LocalizationFile AddBackslash(SourcePath) + "Localization.ini"
@@ -94,14 +94,16 @@ Source: "{#ScriptNameStop}";          DestDir: "{app}"; DestName: "{#ScriptNameS
 Source: "redist\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs
 ; PowerShell service install script
 Source: "Install-SyncthingService.ps1"; DestDir: "{app}"; Flags: ignoreversion; Check: IsAdminInstallMode()
-; 64-bit binaries
-Source: "bin\amd64\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode()
-Source: "nssm\amd64\nssm.exe";       DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode() and IsAdminInstallMode()
-Source: "startps\amd64\startps.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode() and IsAdminInstallMode()
-; 32-bit binaries
-Source: "bin\386\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion solidbreak; Check: not Is64BitInstallMode()
-Source: "nssm\386\nssm.exe";       DestDir: "{app}"; Flags: ignoreversion; Check: (not Is64BitInstallMode()) and IsAdminInstallMode()
-Source: "startps\386\startps.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: (not Is64BitInstallMode()) and IsAdminInstallMode()
+; 386 binaries
+Source: "bin\386\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode()
+Source: "nssm\386\nssm.exe";       DestDir: "{app}"; Flags: ignoreversion; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
+Source: "startps\386\startps.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
+; amd64 binaries
+Source: "bin\amd64\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion solidbreak; Check: Is64BitInstallMode() and IsX64()
+Source: "nssm\amd64\nssm.exe";       DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
+Source: "startps\amd64\startps.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
+; arm64 binaries
+Source: "bin\arm64\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion solidbreak; Check: Is64BitInstallMode() and IsARM64()
 
 [Dirs]
 Name: "{autoappdata}\{#AppName}"; Attribs: notcontentindexed; Check: IsAdminInstallMode()
@@ -112,10 +114,6 @@ Name: "{autoappdata}\{#AppName}"; Attribs: notcontentindexed; Check: IsAdminInst
 
 [Icons]
 ; Both admin and non-admin
-Name: "{group}\{cm:ShortcutNameFAQ}"; \
-  Filename: "{app}\extra\FAQ.pdf"
-Name: "{group}\{cm:ShortcutNameGettingStarted}"; \
-  Filename: "{app}\extra\Getting-Started.pdf"
 Name: "{group}\{cm:ShortcutNameConfigurationPage}"; \
   Filename: "{app}\{#ConfigurationPageName}.url"; \
   Comment: "{cm:ShortcutNameConfigurationPageComment}"; \

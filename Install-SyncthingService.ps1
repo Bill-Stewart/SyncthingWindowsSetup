@@ -37,21 +37,21 @@ Specifies the number of milliseconds to wait at service shutdown.
 
 [CmdletBinding()]
 param(
-  [Parameter(ParameterSetName = "Install",Position = 0,Mandatory = $true)]
+  [Parameter(ParameterSetName = "Install",Position = 0,Mandatory)]
   [Switch]
   $Install,
 
-  [Parameter(ParameterSetName = "Remove",Position = 0,Mandatory = $true)]
+  [Parameter(ParameterSetName = "Remove",Position = 0,Mandatory)]
   [Switch]
   $Remove,
 
-  [Parameter(ParameterSetName = "Install",Position = 1,Mandatory = $true)]
-  [Parameter(ParameterSetName = "Remove",Position = 1,Mandatory = $true)]
+  [Parameter(ParameterSetName = "Install",Position = 1,Mandatory)]
+  [Parameter(ParameterSetName = "Remove",Position = 1,Mandatory)]
   [String]
   $ServiceAccountUserName,
 
-  [Parameter(ParameterSetName = "Install",Position = 2,Mandatory = $true)]
-  [Parameter(ParameterSetName = "Remove",Position = 2,Mandatory = $true)]
+  [Parameter(ParameterSetName = "Install",Position = 2,Mandatory)]
+  [Parameter(ParameterSetName = "Remove",Position = 2,Mandatory)]
   [String]
   $ServiceName,
 

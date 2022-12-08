@@ -2,6 +2,14 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.22.2 (2022-12-08)
+
+* Installer now installs the ARM64 version of `syncthing.exe` on that platform.
+
+* Removed **FAQ** and **Getting Started** PDF shortcuts (Syncthing team is now longer including these in the downloads).
+
+* Mozilla Public License (MPL) shows in installer as informational only rather than as a license agreement that requires acceptance to install.
+
 ## 1.22.1 (2022-12-03)
 
 * Added license page to installer.

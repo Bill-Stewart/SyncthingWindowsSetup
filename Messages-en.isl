@@ -20,8 +20,6 @@ ServiceAccountDescription=Syncthing service account
 ServiceDisplayName=Syncthing Service
 ServiceDescription=Syncthing securely synchronizes files between two or more computers in real time.
 ; [Icons]
-ShortcutNameFAQ=FAQ
-ShortcutNameGettingStarted=Getting Started
 ShortcutNameConfigurationPage=Syncthing Configuration Page
 ShortcutNameConfigurationPageComment=Opens the Syncthing configuration web page.
 ShortcutNameConfigureService=Configure Syncthing Service
