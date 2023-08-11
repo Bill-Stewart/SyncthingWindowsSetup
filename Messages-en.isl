@@ -35,27 +35,31 @@ TasksStartAtLogon=&Start Syncthing automatically when logging on
 RunStatusMsg=Completing setup tasks...
 RunPostInstallStartServiceDescription=&Start Syncthing service
 RunPostInstallStartDescription=&Start Syncthing
-; Configuration page
-ConfigPageCaption=Select Configuration Settings
-ConfigPageDescription=How should Setup configure Syncthing?
-ConfigPageSubCaption=Specify Syncthing configuration settings, then click Next.
-ConfigPageItem0=Automatic &upgrade interval, in hours (0 to disable; default is %1):
-ConfigPageItem1=GUI configuration page listen &address (default is %1):
-ConfigPageItem2=GUI configuration page listen &port (default is %1):
+; Configuration pages
+ConfigPage0Caption=Select Configuration Settings
+ConfigPage0Description=How should Setup configure Syncthing?
+ConfigPage0SubCaption=Specify Syncthing configuration settings, then click Next.
+ConfigPage0Item0=Automatic &upgrade interval, in hours (0 to disable; default is %1):
+ConfigPage0Item1=GUI configuration page listen &address (default is %1):
+ConfigPage0Item2=GUI configuration page listen &port (default is %1):
+ConfigPage0Item3=Relays enabled ('false' or 'true', default is '%1'):
 ; Configuration page errors
-ConfigPageItem0NotValid=The automatic upgrade interval must be in the range 0 through 65535.
-ConfigPageItem1Empty=You must specify a listen address.
-ConfigPageItem2NotValid=The listen port must be in the range 1024 through 65535.
+ConfigPage0Item0NotValid=The automatic upgrade interval must be in the range 0 through 65535.
+ConfigPage0Item1Empty=You must specify a listen address.
+ConfigPage0Item2NotValid=The listen port must be in the range 1024 through 65535.
+ConfigPage0Item3NotValid=The relays value must be 'false' or 'true'.
 ; Ready memo page
 ReadyMemoInstallInfo=Installation mode:
 ReadyMemoInstallAdmin=Install for all users as Windows service
 ReadyMemoInstallAdminServiceAccountUserName=Service account user name: %1
 ReadyMemoInstallCurrentUser=Install for current user (%1)
 ReadyMemoConfigInfo=Configuration settings:
-ReadyMemoConfigItem0Enabled=Automatic upgrade check occurs every %1 hours
 ReadyMemoConfigItem0Disabled=Automatic upgrades are disabled
+ReadyMemoConfigItem0Enabled=Automatic upgrade check occurs every %1 hours
 ReadyMemoConfigItem1=GUI configuration page listen address is
 ReadyMemoConfigItem2=GUI configuration page listen port is
+ReadyMemoConfigItem3Disabled=Relays are disabled
+ReadyMemoConfigItem3Enabled=Relays are enabled
 ; Configuration migration messages
 MigrationNeededMessage=Setup has detected that the Syncthing configuration should be migrated from "%1" to "%2"
 MigrationSucceededMessage=Setup successfully migrated the Syncthing configuration from "%1" to "%2"

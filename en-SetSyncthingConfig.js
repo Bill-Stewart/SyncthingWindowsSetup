@@ -38,6 +38,13 @@ function paramIsEmpty(paramName) {
   return (Args.Named.Item(paramName) == "") || (Args.Named.Item(paramName) == null);
 }
 
+function getBoolStringParam(paramName) {
+  if ( paramIsEmpty(paramName) ) {
+    return "false";
+  }
+  return Args.Named.Item(paramName).toLowerCase() == "true" ? "true" : "false";
+}
+
 function main() {
   // Following depend on /currentuser or /service parameter
   var configPath = null;      // Syncthing config file path
@@ -106,6 +113,15 @@ function main() {
       configValue = Args.Named.Item("autoupgradeinterval");
       xmlElement.text = paramIsEmpty("autoupgradeinterval") ? "12" : configValue;
       XMLDOMDocument.save(configFileName);
+    }
+    // Configure relaysEnabled
+    if ( Args.Named.Exists("relaysenabled") ) {
+      xmlElement = XMLDOMDocument.selectSingleNode("//configuration/options/relaysEnabled");
+      configValue = getBoolStringParam("relaysenabled");
+      if ( xmlElement.text != configValue ) {
+        xmlElement.text = configValue;
+        XMLDOMDocument.save(configFileName);
+      }
     }
     // Configure setLowPriority
     xmlElement = XMLDOMDocument.selectSingleNode("//configuration/options/setLowPriority");

@@ -12,6 +12,7 @@ Syncthing Windows Setup is a lightweight yet full-featured Windows installer for
 - [Background](#background)
 - [Version History](#version-history)
 - [Upgrading Administrative Installations from Version 1.19.1 or Older](#upgrading-administrative-installations-from-version-1191-or-older)
+- [Relays and Upgrading from Version 1.23.6 or Older](#relays-and-upgrading-from-version-1236-or-older)
 - [Setup Command Line Parameters](#setup-command-line-parameters)
 - [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)
   - [Administrative (All Users) Installation Mode](#administrative-all-users-installation-mode)
@@ -80,14 +81,32 @@ When upgrading from version 1.19.1 or older, Setup automatically migrates the Sy
 
 After upgrading from version 1.19.1 or older, you must follow the steps in [Granting Folder Permissions for the Service Account](#granting-folder-permissions-for-the-service-account) to grant the local service user account permission to each synchronized folder in your Syncthing configuration. Until you do so, the Syncthing GUI configuration page will report "access denied" errors because the local service user account does not have "Modify" permissions to the folder(s).
 
+## Relays and Upgrading from Version 1.23.6 or Older
+
+If you installed Syncthing using Setup version 1.23.6 or older, Setup did not specify whether relays are enabled. Effectively, this meant relays were enabled because Syncthing enables relays by default.
+
+In versions newer than 1.23.6, Setup disables relays by default. This change was made because of persistent security software false-positives that detect outbound connections to shared IPs potentially used by "dangerous" IP addresses.
+
+If you use relays and use Setup to upgrade from version 1.23.6 or older, you will need to do one of the following:
+
+* Change the **Relays enabled** settiing on the configuration page to `true`, or
+
+* specify `/relaysenabled=true` on the Setup command line.
+
+Once you configure your preferred setting, Setup will remember it for the next upgrade.
+
+For more information about Syncthing relays, see the following page in the Syncthing documentation:
+
+https://docs.syncthing.net/users/relaying.html
+
 ## Setup Command Line Parameters
 
 The following table lists the most common Setup command line parameters:
 
 Parameter                 | Description
 ---------                 | -----------
-`/allusers`               | Runs Setup in administrative (all users) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)).
 `/currentuser`            | Runs Setup in non-administrative (current user) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)).
+`/allusers`               | Runs Setup in administrative (all users) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)).
 `/dir="`_location_`"`     | Specifies the installation folder. The default installation folder depends on whether Setup runs in administrative (all users) or non administrative (current user) installation mode.
 `/group="`_name_`"`       | Specifies the Start Menu group name. The default group name is **Syncthing**.
 `/tasks="`_tasks_`"`      | Specifies the tasks for the **Select Additional Tasks** wizard page (see [Setup Tasks](#setup-tasks)).
@@ -105,6 +124,7 @@ Parameter                            | Description
 `/autoupgradeinterval=`_interval_    | **[*]** Specifies the number of hours that Syncthing should check for upgrades and automatically upgrade itself. The default value is 12 hours. Specify **0** to disable automatic upgrades.
 `/listenaddress=`_address_           | **[*]** Specifies the listen address for the web GUI configuration page. The default listen address is **127.0.0.1**.
 `/listenport=`_port_                 | **[*]** Specifies the TCP port number for the web GUI configuration page. The default port number is **8384**.
+`/relaysenabled=`_value_             | **[*]** Specifies whether relays are enabled (_value_ must be either **true** or **false**). The default value is **false** (i.e., relays are disabled).
 `/serviceaccountusername=`_username_ | For administrative installation mode, specifies the local service user account user name. The default user name is **SyncthingServiceAcct**.
 `/nostart`                           | Prevents Syncthing from starting automatically after the installation completes. The default is to start Syncthing when installation completes.
 
@@ -116,7 +136,7 @@ Please note the following:
 
 ## Administrative vs. Non Administrative Installation Mode
 
-Setup supports both administrative (all users) and non administrative (current user) installation modes. For an initial installation (not a reinstall or upgrade), Setup displays a dialog box requesting whether you want to install for all users (administrative installation mode) or for the current user (non administrative installation mode). You can bypass the dialog by specifying either `/allusers` or `/currentuser` on Setup's command line (see [Setup Command Line Parameters](#setup-command-line-parameters)). When you run a newer version of Setup (i.e., an upgrade) or reinstall the current version, Setup does does not display the dialog.
+Setup supports both non administrative (current user) and administrative (all users) installation modes. For an initial installation (not a reinstall or upgrade), Setup displays a dialog box requesting whether you want to install for the current user only (non administrative installation mode) or for all users (administrative installation mode). You can bypass the dialog by specifying either `/currentuser` or `/allusers` on Setup's command line (see [Setup Command Line Parameters](#setup-command-line-parameters)). When you run a newer version of Setup (i.e., an upgrade) or reinstall the current version, Setup does does not display the dialog. An initial installation in silent mode will install for the current user by default unless you specify `/allusers` on Setup's command line.
 
 The main advantage of installing in administrative (all users) installation mode is that Syncthing runs as a Windows service and runs without any users being logged on; however, you must manually configure folder permissions to add folders to the Syncthing configuration (see [Granting Folder Permissions for the Service Account](#granting-folder-permissions-for-the-service-account)).
 
@@ -317,7 +337,7 @@ Syncthing requires permission to communicate through the Windows firewall. Creat
 
 * If you run Setup in non administrative (current user) installation mode, Setup prompts to create a firewall rule for Syncthing if it doesn't exist (requires administrative permissions).
 
-* When you specify both the `/currentuser` and `/silent` parameters (see [Setup Command Line Parameters](#setup-command-line-parameters)), Setup does not create a firewall rule for Syncthing, and you must create it manually.
+* If you perform a silent install in non administrative installation mode (see [Setup Command Line Parameters](#setup-command-line-parameters)), Setup does not create a firewall rule for Syncthing, and you must create it manually.
 
 ### Creating the Firewall Rule Manually
 

@@ -21,6 +21,7 @@
 #define DefaultAutoUpgradeInterval "12"
 #define DefaultListenAddress "127.0.0.1"
 #define DefaultListenPort "8384"
+#define DefaultRelaysEnabled "false"
 #define DefaultServiceAccountUserName "SyncthingServiceAcct"
 #define ConfigurationPageName "ConfigurationPage"
 #define ScriptNameConfigSyncthingService "ConfigSyncthingService.js"
@@ -46,7 +47,7 @@ DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableWelcomePage=yes
 AllowNoIcons=yes
-PrivilegesRequired=admin
+PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=.
 OutputBaseFilename=syncthing-{#AppVersion}-setup
@@ -234,8 +235,8 @@ type
 
 // Global variables
 var
-  ConfigPage: TInputQueryWizardPage;                       // Custom wizard page
-  AutoUpgradeInterval, ListenAddress, ListenPort: string;  // Configuration page values
+  ConfigPage0: TInputQueryWizardPage;                                     // Custom wizard page
+  AutoUpgradeInterval, ListenAddress, ListenPort, RelaysEnabled: string;  // Configuration page values
   ServiceAccountUserName: string;
 
 // Windows API functions
@@ -338,6 +339,8 @@ begin
     Trim(ExpandConstant('{param:listenaddress|{#DefaultListenAddress}}')));
   ListenPort := GetPreviousData('ListenPort',
     Trim(ExpandConstant('{param:listenport|{#DefaultListenPort}}')));
+  RelaysEnabled := GetPreviousData('RelaysEnabled',
+    Trim(ExpandConstant('{param:relaysenabled|{#DefaultRelaysEnabled}}')));
   if IsAdminInstallMode() then
   begin
     ServiceAccountUserName := GetPreviousData('ServiceAccountUserName',
@@ -348,16 +351,18 @@ end;
 procedure InitializeWizard();
 begin
   // Custom configuration page
-  ConfigPage := CreateInputQueryPage(wpSelectProgramGroup,
-    CustomMessage('ConfigPageCaption'),
-    CustomMessage('ConfigPageDescription'),
-    CustomMessage('ConfigPageSubCaption'));
-  ConfigPage.Add(FmtMessage(CustomMessage('ConfigPageItem0'), ['{#DefaultAutoUpgradeInterval}']), false);
-  ConfigPage.Add(FmtMessage(CustomMessage('ConfigPageItem1'), ['{#DefaultListenAddress}']), false);
-  ConfigPage.Add(FmtMessage(CustomMessage('ConfigPageItem2'), ['{#DefaultListenPort}']), false);
-  ConfigPage.Values[0] := AutoUpgradeInterval;
-  ConfigPage.Values[1] := ListenAddress;
-  ConfigPage.Values[2] := ListenPort;
+  ConfigPage0 := CreateInputQueryPage(wpSelectProgramGroup,
+    CustomMessage('ConfigPage0Caption'),
+    CustomMessage('ConfigPage0Description'),
+    CustomMessage('ConfigPage0SubCaption'));
+  ConfigPage0.Add(FmtMessage(CustomMessage('ConfigPage0Item0'), ['{#DefaultAutoUpgradeInterval}']), false);
+  ConfigPage0.Add(FmtMessage(CustomMessage('ConfigPage0Item1'), ['{#DefaultListenAddress}']), false);
+  ConfigPage0.Add(FmtMessage(CustomMessage('ConfigPage0Item2'), ['{#DefaultListenPort}']), false);
+  ConfigPage0.Add(FmtMessage(CustomMessage('ConfigPage0Item3'), ['{#DefaultRelaysEnabled}']), false);
+  ConfigPage0.Values[0] := AutoUpgradeInterval;
+  ConfigPage0.Values[1] := ListenAddress;
+  ConfigPage0.Values[2] := ListenPort;
+  ConfigPage0.Values[3] := RelaysEnabled;
   WizardForm.LicenseAcceptedRadio.Checked := true;
 end;
 
@@ -375,6 +380,7 @@ begin
   SetPreviousData(PreviousDataKey, 'AutoUpgradeInterval', AutoUpgradeInterval);
   SetPreviousData(PreviousDataKey, 'ListenAddress', ListenAddress);
   SetPreviousData(PreviousDataKey, 'ListenPort', ListenPort);
+  SetPreviousData(PreviousDataKey, 'RelaysEnabled', RelaysEnabled);
   if IsAdminInstallMode() then
   begin
     SetPreviousData(PreviousDataKey, 'ServiceAccountUserName', ServiceAccountUserName);
@@ -384,58 +390,74 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
   UpgradeInterval, Port: Integer;
+  Relays: string;
 begin
   result := true;
-  if CurPageID = ConfigPage.ID then
+  if CurPageID = ConfigPage0.ID then
   begin
     //-------------------------------------------------------------------------
     // 0 - Validate auto upgrade interval (>= 0 and <= 65535)
-    UpgradeInterval := StrToIntDef(Trim(ConfigPage.Values[0]), -1);
+    UpgradeInterval := StrToIntDef(Trim(ConfigPage0.Values[0]), -1);
     result := (UpgradeInterval >= 0) and (UpgradeInterval <= 65535);
     if not result then
     begin
-      Log(CustomMessage('ConfigPageItem0NotValid'));
+      Log(CustomMessage('ConfigPage0Item0NotValid'));
       if not WizardSilent() then
-        MsgBox(CustomMessage('ConfigPageItem0NotValid'), mbError, MB_OK);
-      WizardForm.ActiveControl := ConfigPage.Edits[0];
-      ConfigPage.Values[0] := '{#DefaultAutoUpgradeInterval}';
-      ConfigPage.Edits[0].SelectAll();
+        MsgBox(CustomMessage('ConfigPage0Item0NotValid'), mbError, MB_OK);
+      WizardForm.ActiveControl := ConfigPage0.Edits[0];
+      ConfigPage0.Values[0] := '{#DefaultAutoUpgradeInterval}';
+      ConfigPage0.Edits[0].SelectAll();
       exit;
     end;
     // Update global based on page
-    AutoUpgradeInterval := Trim(ConfigPage.Values[0]);
+    AutoUpgradeInterval := Trim(ConfigPage0.Values[0]);
     //-------------------------------------------------------------------------
     // 1 - Validate listen address (not empty)
-    result := Trim(ConfigPage.Values[1]) <> '';
+    result := Trim(ConfigPage0.Values[1]) <> '';
     if not result then
     begin
-      Log(CustomMessage('ConfigPageItem1Empty'));
+      Log(CustomMessage('ConfigPage0Item1Empty'));
       if not WizardSilent() then
-        MsgBox(CustomMessage('ConfigPageItem1Empty'), mbError, MB_OK);
-      WizardForm.ActiveControl := ConfigPage.Edits[1];
-      ConfigPage.Values[1] := '{#DefaultListenAddress}';
-      ConfigPage.Edits[1].SelectAll();
+        MsgBox(CustomMessage('ConfigPage0Item1Empty'), mbError, MB_OK);
+      WizardForm.ActiveControl := ConfigPage0.Edits[1];
+      ConfigPage0.Values[1] := '{#DefaultListenAddress}';
+      ConfigPage0.Edits[1].SelectAll();
       exit;
     end;
     // Update global based on page
-    ListenAddress := Trim(ConfigPage.Values[1]);
+    ListenAddress := Trim(ConfigPage0.Values[1]);
     //-------------------------------------------------------------------------
     // 2 - Validate listen port (>= 1024 and <= 65535)
-    Port := StrToIntDef(Trim(ConfigPage.Values[2]), -1);
+    Port := StrToIntDef(Trim(ConfigPage0.Values[2]), -1);
     result := (Port >= 1024) and (Port <= 65535);
     if not result then
     begin
-      Log(CustomMessage('ConfigPageItem2NotValid'));
+      Log(CustomMessage('ConfigPage0Item2NotValid'));
       if not WizardSilent() then
-        MsgBox(CustomMessage('ConfigPageItem2NotValid'), mbError, MB_OK);
-      WizardForm.ActiveControl := ConfigPage.Edits[2];
-      ConfigPage.Values[2] := '{#DefaultListenPort}';
-      ConfigPage.Edits[2].SelectAll();
+        MsgBox(CustomMessage('ConfigPage0Item2NotValid'), mbError, MB_OK);
+      WizardForm.ActiveControl := ConfigPage0.Edits[2];
+      ConfigPage0.Values[2] := '{#DefaultListenPort}';
+      ConfigPage0.Edits[2].SelectAll();
       exit;
     end;
     // Update global based on page
-    ListenPort := Trim(ConfigPage.Values[2]);
+    ListenPort := Trim(ConfigPage0.Values[2]);
     //-------------------------------------------------------------------------
+    // 3 - Validate relays enabled ('true' or 'false')
+    Relays := Lowercase(Trim(ConfigPage0.Values[3]));
+    result := (Relays = 'false') or (Relays = 'true');
+    if not result then
+    begin
+      Log(CustomMessage('ConfigPage0Item3NotValid'));
+      if not WizardSilent() then
+        MsgBox(CustomMessage('ConfigPage0Item3NotValid'), mbError, MB_OK);
+      WizardForm.ActiveControl := ConfigPage0.Edits[3];
+      ConfigPage0.Values[3] := '{#DefaultRelaysEnabled}';
+      ConfigPage0.Edits[3].SelectAll();
+      exit;
+    end;
+    // Update global based on page
+    RelaysEnabled := Relays;
   end;
 end;
 
@@ -494,6 +516,11 @@ begin
   Info := Info + NewLine;
   Info := Info + Space + CustomMessage('ReadyMemoConfigItem1') + ' ' + ListenAddress + NewLine
     + Space + CustomMessage('ReadyMemoConfigItem2') + ' ' + ListenPort;
+  Info := Info + NewLine;
+  if RelaysEnabled = 'false' then
+    Info := Info + Space + CustomMessage('ReadyMemoConfigItem3Disabled')
+  else
+    Info := Info + Space + CustomMessage('ReadyMemoConfigItem3Enabled');
   if MemoTasksInfo <> '' then
   begin
     if Info <> '' then
@@ -600,8 +627,9 @@ begin
     Params := Params + ' /service'
   else
     Params := Params + ' /currentuser';
-  Params := Params + ' /autoupgradeinterval:' + AutoUpgradeInterval + ' /guiaddress:"'
-    + ListenAddress + ':' + ListenPort + '"';
+  Params := Params + ' /autoupgradeinterval:' + AutoUpgradeInterval
+    + ' /guiaddress:"' + ListenAddress + ':' + ListenPort + '"' +
+    + ' /relaysenabled:' + RelaysEnabled;
   if WizardSilent() then
     Params := Params + ' /silent';
   result := ExecEx(FileName, Params, true);

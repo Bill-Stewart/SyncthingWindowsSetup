@@ -2,6 +2,12 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.23.7 (2023-08-10)
+
+* For new installs, Setup now defaults to non-administrative installation mode.
+
+* Added `relaysenabled` configuration item that defaults to `false`.
+
 ## 1.22.2 (2022-12-08)
 
 * Installer now installs the ARM64 version of `syncthing.exe` on that platform.
