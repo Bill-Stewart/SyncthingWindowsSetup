@@ -29,7 +29,7 @@ Specifies the display name for the service.
 Specifies the description for the service.
 
 .PARAMETER ServiceStartupType
-Specifies the startup type for the service. Must be one of: 'SERVICE_AUTO_START', 'SERVICE_DELAYED_AUTO_START', 'SERVICE_DEMAND_START', or 'SERVICE_DISABLED'.
+Specifies the startup type for the service. Must be one of: 'auto', 'delayed-auto', 'demand', or 'disabled'.
 
 .PARAMETER ServiceShutdownTimeout
 Specifies the number of milliseconds to wait at service shutdown.
@@ -67,8 +67,8 @@ param(
   [String]
   $ServiceDescription,
 
-  [Parameter(ParameterSetName = "Install")]
-  [ValidateSet("SERVICE_AUTO_START","SERVICE_DELAYED_AUTO_START","SERVICE_DEMAND_START","SERVICE_DISABLED")]
+  [Parameter(ParameterSetName = "Install",Mandatory)]
+  [ValidateSet("auto","delayed-auto","demand","disabled")]
   [String]
   $ServiceStartupType,
 
@@ -363,6 +363,7 @@ $RANDOM_PASSWORD_LENGTH   = 127
 $USER_PRIV_USER           = 1
 $UF_SCRIPT                = 0x00001
 $UF_ACCOUNTDISABLE        = 0x00002
+$UF_LOCKOUT               = 0x00010
 $UF_DONT_EXPIRE_PASSWD    = 0x10000
 
 # Returns a random SecureString containing the specified # of characters
@@ -500,6 +501,10 @@ function Reset-LocalUserAccount {
   # Enable if disabled
   if ( ($userInfo2.usri2_flags -band $UF_ACCOUNTDISABLE) -ne 0 ) {
     $userInfo2.usri2_flags = $userInfo2.usri2_flags -band (-bnot $UF_ACCOUNTDISABLE)
+  }
+  # Clear lockout if locked out
+  if ( ($userInfo2.usri2_flags -band $UF_LOCKOUT) -ne 0 ) {
+    $userInfo2.usri2_flags = $userInfo2.usri2_flags -band (-bnot $UF_LOCKOUT)
   }
   # Set "Password never expires" if not set
   if ( ($userInfo2.usri2_flags -band $UF_DONT_EXPIRE_PASSWD) -eq 0 ) {
@@ -650,6 +655,30 @@ function Test-Service {
   return $null -ne (Get-Service $serviceName -ErrorAction SilentlyContinue)
 }
 
+function Start-Program {
+  param(
+    [String]
+    $filePath,
+
+    [String[]]
+    $argumentList
+  )
+  if ( Test-Path -LiteralPath $filePath ) {
+    $params = @{
+      "FilePath"     = $filePath
+      "ArgumentList" = $argumentList
+      "PassThru"     = $true
+      "Wait"         = $true
+      "WindowStyle"  = "Hidden"
+    }
+    $process = Start-Process @params
+    return $process.ExitCode
+  }
+  else {
+    return $ERROR_FILE_NOT_FOUND
+  }
+}
+
 function InstallService {
   param(
     [String]
@@ -674,6 +703,38 @@ function InstallService {
     $serviceShutdownTimeout
   )
   $result = 0
+  # Create config directory if it doesn't exist
+  if ( -not (Test-Path -LiteralPath $SyncthingConfigPath) ) {
+    New-Item $SyncthingConfigPath -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
+    if ( -not $? ) { return $ERROR_CANNOT_MAKE }
+  }
+  # Reset permissions for config directory
+  $argList = @(
+    '"{0}"' -f $SyncthingConfigPath
+    '/reset'
+    '/t'
+  )
+  Start-Program $ICACLS $argList | Out-Null
+  $argList = @(
+    '"{0}"' -f $SyncthingConfigPath
+    '/inheritance:r'
+    '/grant "*S-1-5-18:(OI)(CI)F"'
+    '/grant "*S-1-5-32-544:(OI)(CI)F"'
+    '/grant "{0}:(OI)(CI)M"' -f $serviceAccountUserName
+  )
+  Start-Program $ICACLS $argList | Out-Null
+  # Reset "i" attribute for config directory (paradoxically, "+i" means
+  # "not content indexed")
+  $argList = @(
+    '+i "{0}"' -f $SyncthingConfigPath
+  )
+  Start-Program $ATTRIB $argList | Out-Null
+  $argList = @(
+    '+i "{0}"' -f (Join-Path $SyncthingConfigPath "*")
+    '/s'
+    '/d'
+  )
+  Start-Program $ATTRIB $argList | Out-Null
   $serviceAccountPassword = New-RandomSecureString $RANDOM_PASSWORD_LENGTH
   # Reset service user account if it exists, or create if it doesn't exist
   if ( Test-LocalUserAccount $serviceAccountUserName ) {
@@ -687,38 +748,24 @@ function InstallService {
   if ( $result -ne 0 ) { return $result }
   # Install service if not installed
   if ( -not (Test-Service $serviceName) ) {
-    & $NSSM install $serviceName $Syncthing | Out-Null
-    $result = $LASTEXITCODE
-  }
-  if ( $result -ne 0 ) { return $result }
-  # Create config directory if it doesn't exist
-  if ( -not (Test-Path $SyncthingConfigPath) ) {
-    New-Item $SyncthingConfigPath -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
-    if ( -not $? ) { return $ERROR_CANNOT_MAKE }
-  }
-  # (re)set permissions and attributes for config directory
-  # (paradoxically, "+i" means "not content indexed")
-  & $ICACLS $SyncthingConfigPath /reset /t
-  & $ICACLS $SyncthingConfigPath /inheritance:r /grant '*S-1-5-18:(OI)(CI)F' /grant '*S-1-5-32-544:(OI)(CI)F' /grant ('{0}:(OI)(CI)M' -f $serviceAccountUserName)
-  & $Attrib +i $SyncthingConfigPath
-  & $Attrib +i (Join-Path $SyncthingConfigPath "*") /s /d
-  # Configure service parameters
-  & $NSSM set $serviceName ObjectName ".\$serviceAccountUserName" (ConvertTo-String $serviceAccountPassword)
-  $result = $LASTEXITCODE
-  if ( $result -eq 0 ) {
-    & $NSSM set $serviceName Start $serviceStartupType
-    & $NSSM set $serviceName AppParameters ('--home=\"{0}\" --no-browser --no-restart' -f $SyncthingConfigPath)
-    & $NSSM set $serviceName DisplayName $serviceDisplayName
-    & $NSSM set $serviceName Description $serviceDescription
-    & $NSSM set $serviceName AppPriority BELOW_NORMAL_PRIORITY_CLASS
-    & $NSSM set $serviceName AppNoConsole 1
-    & $NSSM set $serviceName AppStopMethodConsole $serviceShutdownTimeout
-    & $NSSM set $serviceName AppStopMethodWindow $serviceShutdownTimeout
-    & $NSSM set $serviceName AppStopMethodThreads $serviceShutdownTimeout
-    & $NSSM set $serviceName AppExit Default Exit
-    & $NSSM set $serviceName AppExit 0 Exit
-    & $NSSM set $serviceName AppExit 3 Restart
-    & $NSSM set $serviceName AppExit 4 Restart
+    $argList = @(
+      'create'
+      '"{0}"' -f $serviceName
+      'binPath= "\"{0}\" run --cwd \"{1}\" --no-log --priority below-normal --restart-if 3,4 --stop-timeout {2} -- \"{3}\" --home=\"{4}\" --no-browser --no-restart"' -f
+        $SHAWL,(Split-Path $SYNCTHING -Parent),$serviceShutdownTimeout,$SYNCTHING,$SyncthingConfigPath
+      'DisplayName= "{0}"' -f $serviceDisplayName
+      'start= {0}' -f $serviceStartupType
+      'obj= ".\{0}"' -f $serviceAccountUserName
+      'password= "{0}"' -f (ConvertTo-String $serviceAccountPassword)
+    )
+    $result = Start-Program $SC $argList
+    if ( $result -ne 0 ) { return $result }
+    # Set service description
+    $argList = @(
+      'description "{0}"' -f $serviceName
+      '"{0}"' -f $serviceDescription
+    )
+    $result = Start-Program $SC $argList
   }
   return $result
 }
@@ -733,15 +780,15 @@ function RemoveService {
   )
   $result = 0
   # Stop and remove service if it exists
-  if ( Test-Service $serviceName ) {
-    & $NSSM stop $serviceName | Out-Null
-    $result = $LASTEXITCODE
-    if ( $result -ne 0 ) { return $result }
-    & $NSSM remove $serviceName confirm | Out-Null
-    $result = $LASTEXITCODE
+  $service = Get-Service $serviceName -ErrorAction SilentlyContinue
+  if ( $null -ne $service ) {
+    if ( $service.Status -eq [ServiceProcess.ServiceControllerStatus]::Running ) {
+      $result = Start-Program $NET "STOP",$serviceName
+      if ( $result -ne 0 ) { return $result }
+    }
+    $result = Start-Program $SC "delete",$serviceName
     if ( $result -ne 0 ) { return $result }
   }
-  if ( $result -ne 0 ) { return $result }
   # Disable user and remove the user right if user exists
   if ( Test-LocalUserAccount $serviceAccountUserName ) {
     $result = Disable-LocalUserAccount $serviceAccountUserName
@@ -749,6 +796,7 @@ function RemoveService {
       $result = Revoke-UserRight $serviceAccountUserName SeServiceLogonRight
     }
   }
+  return $result
 }
 
 # Exit if session isn't elevated
@@ -760,13 +808,15 @@ if ( -not (Test-Elevation) ) {
 $ScriptPath = Split-Path $MyInvocation.MyCommand.Path -Parent
 
 # Get paths to executables
-$Attrib = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::System)) "attrib.exe"
+$ATTRIB = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::System)) "attrib.exe"
 $ICACLS = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::System)) "icacls.exe"
-$NSSM = Join-Path $ScriptPath "nssm.exe"
-$Syncthing = Join-Path $ScriptPath "syncthing.exe"
+$NET = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::System)) "net.exe"
+$SC = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::System)) "sc.exe"
+$SHAWL = Join-Path $ScriptPath "shawl.exe"
+$SYNCTHING = Join-Path $ScriptPath "syncthing.exe"
 
 # Terminate script if we can't find an executable
-$Attrib,$ICACLS,$NSSM,$Syncthing | Foreach-Object {
+$ATTRIB,$ICACLS,$NET,$SC,$SHAWL,$SYNCTHING | Foreach-Object {
   if ( -not (Test-Path $_) ) {
     Write-Error (Get-MessageDescription $ERROR_FILE_NOT_FOUND -asError)
     exit $ERROR_FILE_NOT_FOUND

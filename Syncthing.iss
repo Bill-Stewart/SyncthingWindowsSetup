@@ -21,10 +21,9 @@
 #define DefaultAutoUpgradeInterval "12"
 #define DefaultListenAddress "127.0.0.1"
 #define DefaultListenPort "8384"
-#define DefaultRelaysEnabled "false"
+#define DefaultRelaysEnabled "true"
 #define DefaultServiceAccountUserName "SyncthingServiceAcct"
 #define ConfigurationPageName "ConfigurationPage"
-#define ScriptNameConfigSyncthingService "ConfigSyncthingService.js"
 #define ScriptNameSetSyncthingConfig "SetSyncthingConfig.js"
 #define ScriptNameStartSyncthing "StartSyncthing.js"
 #define ScriptNameStopSyncthing "StopSyncthing.js"
@@ -58,6 +57,7 @@ WizardStyle=modern
 WizardSizePercent=120
 UninstallFilesDir={app}\uninstall
 UninstallDisplayIcon={app}\syncthing.exe,0
+UninstallDisplayName={#AppName} {code:GetInstallationMode}
 VersionInfoProductName={#AppName}
 VersionInfoCompany={#AppPublisher}
 VersionInfoProductVersion={#AppVersion}
@@ -77,34 +77,35 @@ Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; InfoBeforeFile
 #define protected i 0
 #sub LocalizeWSHScripts
 #define protected Language Languages[i]
-#define protected ScriptNameSetConfig     ReadIni(LocalizationFile, Language, "ScriptNameSetSyncthingConfig")
-#define protected ScriptNameConfigService ReadIni(LocalizationFile, Language, "ScriptNameConfigSyncthingService")
-#define protected ScriptNameFirewallRule  ReadIni(LocalizationFile, Language, "ScriptNameSyncthingFirewallRule")
-#define protected ScriptNameLogonTask     ReadIni(LocalizationFile, Language, "ScriptNameSyncthingLogonTask")
-#define protected ScriptNameStart         ReadIni(LocalizationFile, Language, "ScriptNameStartSyncthing")
-#define protected ScriptNameStop          ReadIni(LocalizationFile, Language, "ScriptNameStopSyncthing")
-Source: "{#ScriptNameFirewallRule}";  DestDir: "{app}"; DestName: "{#ScriptNameSyncthingFirewallRule}";  Flags: ignoreversion; Languages: {#Language}
-Source: "{#ScriptNameSetConfig}";     DestDir: "{app}"; DestName: "{#ScriptNameSetSyncthingConfig}";     Flags: ignoreversion; Languages: {#Language}
-Source: "{#ScriptNameConfigService}"; DestDir: "{app}"; DestName: "{#ScriptNameConfigSyncthingService}"; Flags: ignoreversion; Languages: {#Language}; Check: IsAdminInstallMode()
-Source: "{#ScriptNameLogonTask}";     DestDir: "{app}"; DestName: "{#ScriptNameSyncthingLogonTask}";     Flags: ignoreversion; Languages: {#language}; Check: not IsAdminInstallMode()
-Source: "{#ScriptNameStart}";         DestDir: "{app}"; DestName: "{#ScriptNameStartSyncthing}";         Flags: ignoreversion; Languages: {#language}; Check: not IsAdminInstallMode()
-Source: "{#ScriptNameStop}";          DestDir: "{app}"; DestName: "{#ScriptNameStopSyncthing}";          Flags: ignoreversion; Languages: {#language}; Check: not IsAdminInstallMode()
+#define protected ScriptNameSetConfig    ReadIni(LocalizationFile, Language, "ScriptNameSetSyncthingConfig")
+#define protected ScriptNameFirewallRule ReadIni(LocalizationFile, Language, "ScriptNameSyncthingFirewallRule")
+#define protected ScriptNameLogonTask    ReadIni(LocalizationFile, Language, "ScriptNameSyncthingLogonTask")
+#define protected ScriptNameStart        ReadIni(LocalizationFile, Language, "ScriptNameStartSyncthing")
+#define protected ScriptNameStop         ReadIni(LocalizationFile, Language, "ScriptNameStopSyncthing")
+Source: "{#ScriptNameFirewallRule}"; DestDir: "{app}"; DestName: "{#ScriptNameSyncthingFirewallRule}"; Languages: {#Language}
+Source: "{#ScriptNameSetConfig}";    DestDir: "{app}"; DestName: "{#ScriptNameSetSyncthingConfig}";    Languages: {#Language}
+Source: "{#ScriptNameLogonTask}";    DestDir: "{app}"; DestName: "{#ScriptNameSyncthingLogonTask}";    Languages: {#language}; Check: not IsAdminInstallMode()
+Source: "{#ScriptNameStart}";        DestDir: "{app}"; DestName: "{#ScriptNameStartSyncthing}";        Languages: {#language}; Check: not IsAdminInstallMode()
+Source: "{#ScriptNameStop}";         DestDir: "{app}"; DestName: "{#ScriptNameStopSyncthing}";         Languages: {#language}; Check: not IsAdminInstallMode()
 #endsub
 #for { i = 0; i < NumLanguages; i++ } LocalizeWSHScripts
 ; General files
-Source: "redist\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs
-; PowerShell service install script
-Source: "Install-SyncthingService.ps1"; DestDir: "{app}"; Flags: ignoreversion; Check: IsAdminInstallMode()
+Source: "redist\*"; DestDir: "{app}"; Flags: createallsubdirs recursesubdirs
+; PowerShell scripts
+Source: "Install-SyncthingService.ps1";              DestDir: "{app}"; Check: IsAdminInstallMode()
+Source: "Reset-SyncthingServiceAccountPassword.ps1"; DestDir: "{app}"; Check: IsAdminInstallMode()
+; shawl license
+Source: "shawl-license.txt"; DestDir: "{app}"; Check: IsAdminInstallMode()
 ; 386 binaries
 Source: "bin\386\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode()
-Source: "nssm\386\nssm.exe";       DestDir: "{app}"; Flags: ignoreversion; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
+Source: "shawl\386\shawl.exe";     DestDir: "{app}"; Flags: ignoreversion; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
 Source: "startps\386\startps.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
 ; amd64 binaries
 Source: "bin\amd64\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion solidbreak; Check: Is64BitInstallMode() and IsX64()
-Source: "nssm\amd64\nssm.exe";       DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
-Source: "startps\amd64\startps.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
+Source: "shawl\amd64\shawl.exe";     DestDir: "{app}"; Flags: ignoreversion;            Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
+Source: "startps\amd64\startps.exe"; DestDir: "{app}"; Flags: ignoreversion;            Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
 ; arm64 binaries
-Source: "bin\arm64\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion solidbreak; Check: Is64BitInstallMode() and IsARM64()
+Source: "bin\arm64\syncthing.exe"; DestDir: "{app}"; Flags: ignoreversion solidbreak; Check: Is64BitInstallMode() and IsARM64()
 
 [Dirs]
 Name: "{autoappdata}\{#AppName}"; Attribs: notcontentindexed; Check: IsAdminInstallMode()
@@ -119,14 +120,6 @@ Name: "{group}\{cm:ShortcutNameConfigurationPage}"; \
   Filename: "{app}\{#ConfigurationPageName}.url"; \
   Comment: "{cm:ShortcutNameConfigurationPageComment}"; \
   IconFilename: "{app}\syncthing.exe"
-; Admin: Configure service
-Name: "{group}\{cm:ShortcutNameConfigureService}"; \
-  Filename: "{sys}\wscript.exe"; \
-  Parameters: """{app}\{#ScriptNameConfigSyncthingService}"""; \
-  Comment: "{cm:ShortcutNameConfigureServiceComment}"; \
-  IconFilename: "{app}\nssm.exe"; \
-  Flags: excludefromshowinnewinstall; \
-  Check: IsAdminInstallMode()
 ; Non-admin: Start and stop shortcuts
 Name: "{group}\{cm:ShortcutNameStartSyncthing}"; \
   Filename: "{sys}\wscript.exe"; \
@@ -184,8 +177,8 @@ Filename: "{sys}\cscript.exe"; \
   StatusMsg: "{cm:RunStatusMsg}"; \
   Tasks: startatlogon
 ; Admin post-install
-Filename: "{app}\nssm.exe"; \
-  Parameters: "start ""{#ServiceName}"""; \
+Filename: "{sys}\net.exe"; \
+  Parameters: "START ""{#ServiceName}"""; \
   Description: "{cm:RunPostInstallStartServiceDescription}"; \
   Flags: runascurrentuser runhidden nowait postinstall; \
   Check: IsAdmininstallMode() and GetStartAfterInstall() and ServiceExists() and (not ServiceRunning())
@@ -210,6 +203,10 @@ Filename: "{sys}\cscript.exe"; \
   RunOnceId: removelogontask; \
   Check: not IsAdminInstallMode()
 
+[InstallDelete]
+Type: files; Name: "{app}\ConfigSyncthingService.js"
+Type: files; Name: "{app}\nssm.exe"
+
 [UninstallDelete]
 Type: files; Name: "{app}\{#ConfigurationPageName}.url"
 Type: files; Name: "{app}\syncthing.exe.old"
@@ -221,6 +218,9 @@ const
   SERVICE_QUERY_STATUS     = 4;
   SERVICE_RUNNING          = 4;
   MIGRATION_FLAG_FILE_NAME = 'CONFIGURATION_HAS_BEEN_MIGRATED.txt';
+  CLSID_ShellLink          = '{00021401-0000-0000-C000-000000000046}';
+  MAX_PATH                 = 260;
+  STGM_READ                = $00000000;
 
 type
   TServiceStatus = record
@@ -231,6 +231,61 @@ type
     dwServiceSpecificExitCode: DWORD;
     dwCheckPoint:              DWORD;
     dwWaitHint:                DWORD;
+  end;
+
+  // Needed for GetLinkFileArguments()
+  TWin32FindDataW = record
+    dwFileAttributes:   DWORD;
+    ftCreationTime:     TFileTime;
+    ftLastAccessTime:   TFileTime;
+    ftLastWriteTime:    TFileTime;
+    nFileSizeHigh:      DWORD;
+    nFileSizeLow:       DWORD;
+    dwReserved0:        DWORD;
+    dwReserved1:        DWORD;
+    cFileName:          array[0..MAX_PATH - 1] of Char;
+    cAlternateFileName: array[0..13] of Char;
+  end;
+
+  // Needed for GetLinkFileArguments()
+  IShellLinkW = interface(IUnknown)
+    '{000214F9-0000-0000-C000-000000000046}'
+    function GetPath(pszFile: string; cchMaxPath: Integer;
+      var FindData: TWin32FindDataW; fFlags: DWORD): HRESULT;
+    procedure Dummy2;
+    procedure Dummy3;
+    function GetDescription(pszName: string; cchMaxName: Integer): HRESULT;
+    function SetDescription(pszName: string): HRESULT;
+    function GetWorkingDirectory(pszDir: string; cchMaxPath: Integer): HRESULT;
+    function SetWorkingDirectory(pszDir: string): HRESULT;
+    function GetArguments(pszArgs: string; cchMaxPath: Integer): HRESULT;
+    function SetArguments(pszArgs: string): HRESULT;
+    function GetHotkey(var pwHotkey: Word): HRESULT;
+    function SetHotkey(wHotkey: Word): HRESULT;
+    function GetShowCmd(out piShowCmd: Integer): HRESULT;
+    function SetShowCmd(iShowCmd: Integer): HRESULT;
+    function GetIconLocation(pszIconPath: string; cchIconPath: Integer;
+      out piIcon: Integer): HRESULT;
+    function SetIconLocation(pszIconPath: string; iIcon: Integer): HRESULT;
+    function SetRelativePath(pszPathRel: string; dwReserved: DWORD): HRESULT;
+    function Resolve(Wnd: HWND; fFlags: DWORD): HRESULT;
+    function SetPath(pszFile: string): HRESULT;
+  end;
+
+  // Needed for GetLinkFileArguments()
+  IPersist = interface(IUnknown)
+    '{0000010C-0000-0000-C000-000000000046}'
+    function GetClassID(var classID: TGUID): HRESULT;
+  end;
+
+  // Needed for GetLinkFileArguments()
+  IPersistFile = interface(IPersist)
+    '{0000010B-0000-0000-C000-000000000046}'
+    function IsDirty: HRESULT;
+    function Load(pszFileName: string; dwMode: LongInt): HRESULT;
+    function Save(pszFileName: string; fRemember: BOOL): HRESULT;
+    function SaveCompleted(pszFileName: string): HRESULT;
+    function GetCurFile(out pszFileName: string): HRESULT;
   end;
 
 // Global variables
@@ -313,6 +368,45 @@ begin
       end;
     finally
       CloseServiceHandle(Manager);
+    end;
+end;
+
+// Returns the 'Arguments' portion of the specified shortcut (lnk) file
+function GetLinkFileArguments(const FileName: string): string;
+var
+  ComObject: IUnknown;
+  ShellLink: IShellLinkW;
+  PersistFile: IPersistFile;
+begin
+  ComObject := CreateComObject(StringToGuid(CLSID_ShellLink));
+  PersistFile := IPersistFile(ComObject);
+  OleCheck(PersistFile.Load(FileName, STGM_READ));
+  ShellLink := IShellLinkW(ComObject);
+  SetLength(result, MAX_PATH);
+  OleCheck(ShellLink.GetArguments(result, MAX_PATH));
+  SetLength(result, Pos(#0, result) - 1);
+end;
+
+// Returns the full path and name of the first shortcut (lnk) file containing
+// the specified substring in its 'Arguments'; returns an empty string if none
+function GetShortcutFileNameContainingStringInArgs(Path, Substring: string): string;
+var
+  FileName: string;
+  FindRec: TFindRec;
+begin
+  result := '';
+  if FindFirst(AddBackslash(Path) + '*.lnk', FindRec) then
+    try
+      repeat
+        FileName := AddBackslash(Path) + FindRec.Name;
+        if Pos(AnsiLowercase(Substring), AnsiLowercase(GetLinkFileArguments(FileName))) > 0 then
+        begin
+          result := FileName;
+          break;
+        end;
+      until not FindNext(FindRec);
+    finally
+      FindClose(FindRec);
     end;
 end;
 
@@ -545,6 +639,15 @@ begin
   result := ListenPort;
 end;
 
+// Requires string param
+function GetInstallationMode(Param: string): string;
+begin
+  if IsAdminInstallMode() then
+    result := '(admin)'
+  else
+    result := '(current user)';
+end;
+
 function GetStartAfterInstall(): Boolean;
 begin
   result := not ParamStrExists('/nostart');
@@ -599,9 +702,9 @@ begin
     + ' -ServiceDescription "{cm:ServiceDescription}"'
     + ' -ServiceStartupType ');
   if WizardIsTaskSelected('startatboot') then
-    Params := Params + 'SERVICE_DELAYED_AUTO_START'
+    Params := Params + 'delayed-auto'
   else
-    Params := Params + 'SERVICE_DEMAND_START';
+    Params := Params + 'demand';
   Params := Params + ' -ServiceShutdownTimeout {#ServiceShutdownTimeout}';
   result := ExecEx(FileName, Params, true);
 end;
@@ -639,14 +742,14 @@ function StopService(): Integer;
 begin
   result := 0;
   if ServiceExists() then
-    result := ExecEx(ExpandConstant('{app}\nssm.exe'), 'stop "{#ServiceName}"', true);
+    result := ExecEx(ExpandConstant('{sys}\net.exe'), 'STOP "{#ServiceName}"', true);
 end;
 
 function StartService(): Integer;
 begin
   result := 0;
   if ServiceExists() and (not ServiceRunning()) then
-    result := ExecEx(ExpandConstant('{app}\nssm.exe'), 'start "{#ServiceName}"', true);
+    result := ExecEx(ExpandConstant('{app}\net.exe'), 'START "{#ServiceName}"', true);
 end;
 
 function RemoveService(): Integer;
@@ -669,8 +772,8 @@ begin
   result := '';
   if IsAdminInstallMode() then
   begin
-    if ServiceRunning() then
-      StopService();
+    if ServiceExists() then
+      RemoveService();
   end
   else
   begin
@@ -772,7 +875,7 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  LocalServiceConfigPath, AppConfigPath: string;
+  LocalServiceConfigPath, AppConfigPath, ShortcutFileName: string;
   RemoveOldConfig: Boolean;
 begin
   if CurStep = ssPostInstall then
@@ -797,6 +900,10 @@ begin
             RemoveMigratedConfig();
         end;
       end;
+      // Delete legacy NSSM shortcut if needed
+      ShortcutFileName := GetShortcutFileNameContainingStringInArgs(ExpandConstant('{group}'), 'ConfigSyncthingService.js');
+      if ShortcutFileName <> '' then
+        DeleteFile(ShortcutFileName);
     end;
     SetupConfiguration();
   end;

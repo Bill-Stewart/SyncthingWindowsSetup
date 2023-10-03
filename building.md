@@ -12,23 +12,24 @@
 
 The following table lists all of the files associated with Syncthing Windows Setup (hereafter referred to as "Setup").
 
-| Folder or File                 | Description
-| --------------                 | -----------
-| `bin`                          | Folder contains 32-bit and 64-bit Syncthing binaries
-| `nssm`                         | Folder contains 32-bit and 64-bit [NSSM](https://nssm.cc) binaries
-| `startps`                      | Folder contains 32-bit and 64-bit `startps.exe` binaries
-| `redist`                       | Folder contains other files from the Syncthing download archive
-| `building.md`                  | This file
-| `LICENSE`                      | License agreement
-| `Get-Download.ps1`             | Downloads latest zip files from https://syncthing.net/downloads/
-| `Expand-Download.ps1`          | PowerShell script that extracts the Syncthing Windows download zip files to the correct paths for building Setup
-| `Install-SyncthingService.ps1` | PowerShell script that installs the service's local user account and the Windows service
-| _lang_`-`_scriptname_`.js`     | Setup installs one or more of these WSH scripts on the user's system
-| `License-`_lang_`.rtf`         | License file displayed during installation
-| `README.md`                    | Setup documentation
-| `Syncthing.iss`                | Inno Setup reads this file and builds Setup
-| `Localization.ini`             | Facilitates localization of the script files (see [Localization](#localization))
-| `Messages-en.isl`              | Setup messages file (see [Localization](#localization))
+| Folder or File                              | Description
+| --------------                              | -----------
+| `bin`                                       | Folder contains 32-bit and 64-bit Syncthing binaries
+| `shawl`                                     | Folder contains 32-bit and 64-bit [shawl](https://github.com/mtkennerly/shawl) binaries
+| `startps`                                   | Folder contains 32-bit and 64-bit `startps.exe` binaries
+| `redist`                                    | Folder contains other files from the Syncthing download archive
+| `building.md`                               | This file
+| `LICENSE`                                   | License agreement
+| `Get-Download.ps1`                          | Downloads latest zip files from https://syncthing.net/downloads/
+| `Expand-Download.ps1`                       | PowerShell script that extracts the Syncthing Windows download zip files to the correct paths for building Setup
+| `Install-SyncthingService.ps1`              | PowerShell script that installs the service's local user account and the Windows service
+| `Reset-SyncthingServiceAccountPassword.ps1` | PowerShell script that restarts the service's local user account password
+| _lang_`-`_scriptname_`.js`                  | Setup installs one or more of these WSH scripts on the user's system
+| `License-`_lang_`.rtf`                      | License file displayed during installation
+| `README.md`                                 | Setup documentation
+| `Syncthing.iss`                             | Inno Setup reads this file and builds Setup
+| `Localization.ini`                          | Facilitates localization of the script files (see [Localization](#localization))
+| `Messages-en.isl`                           | Setup messages file (see [Localization](#localization))
 
 ## Prerequisites
 
@@ -44,7 +45,7 @@ Run `Get-Download.ps1` to download the latest Syncthing zip files.
 
 ## Extract the Archives
 
-From a PowerShell command line, run the `Expand-Download.ps1` script in the build folder. The script uses 7-Zip to extract the Syncthing archive files into a folder structure appropriate for Syncthing.
+From a PowerShell command line, run the `Expand-Download.ps1` script in the build folder. The script uses 7-Zip to extract the Syncthing archive files into a folder structure appropriate for compiling Setup.
 
 ## Compile the Setup Program
 
@@ -97,7 +98,6 @@ For example, the following steps describe how to add localization for Dutch (lan
 6. Add a section in `Localization.ini` for the Dutch language code (`nl`) and add the corresponding script file names; e.g.:
 
         [nl]
-        ScriptNameConfigSyncthingService=nl-ConfigSyncthingService.js
         ScriptNameSetSyncthingConfig=nl-SetSyncthingConfig.js
         ScriptNameStartSyncthing=nl-StartSyncthing.js
         ScriptNameStopSyncthing=nl-StopSyncthing.js

@@ -22,8 +22,6 @@ ServiceDescription=Syncthing securely synchronizes files between two or more com
 ; [Icons]
 ShortcutNameConfigurationPage=Syncthing Configuration Page
 ShortcutNameConfigurationPageComment=Opens the Syncthing configuration web page.
-ShortcutNameConfigureService=Configure Syncthing Service
-ShortcutNameConfigureServiceComment=Configures the Syncthing Windows service using NSSM (recommended for advanced users only).
 ShortcutNameStartSyncthing=Start Syncthing
 ShortcutNameStartSyncthingComment=Starts Syncthing as the current user.
 ShortcutNameStopSyncthing=Stop Syncthing

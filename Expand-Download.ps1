@@ -41,8 +41,8 @@ if ( $Version -eq "" ) {
 $Archives = Get-ChildItem (Join-Path $PSScriptRoot ("syncthing-windows-*-v{0}.zip" -f $Version))
 foreach ( $Archive in $Archives ) {
   $PlatformName = [Regex]::Match($Archive.Name,
-  '-windows-([^-]+)-',
-  [Text.RegularExpressions.RegexOptions]::IgnoreCase).Groups[1].Value
+    '-windows-([^-]+)-',
+    [Text.RegularExpressions.RegexOptions]::IgnoreCase).Groups[1].Value
   if ( $PlatformName -eq "" ) {
     Write-Error ("Failed to extract platform name from file name '{0}'." -f $Archive.Name)
     continue

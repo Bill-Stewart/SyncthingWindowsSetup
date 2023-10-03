@@ -2,6 +2,21 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.25.0 (2023-10-03)
+
+* Due to a number of security vendors automatically assuming NSSM is malware (even though it was being used legitimately), Setup now uses [shawl](https://github.com/mtkennerly/shawl) to run the Windows service. (The hope is that this will reduce the number of security software false positive malware notitifications when downloading and running Setup.)
+
+* At the request of the Syncthing maintainers, relaying is now enabled by default. If you installed an older version that disabled relays by default and you want to enable relaying, do one of the following:
+
+  * On the **Select Configuration Settings** page, specify `true` for the **Relays enabled** option, or
+  * Specify `/relaysenabled=true` on the Setup command line
+
+* Removed **Configure Syncthing Service** shortcut (administrative installation mode only).
+
+* Added `Reset-SyncthingServiceAccountPassword.ps1` script (administrative installation mode only).
+
+* The name of the installed package in the Windows application list now reflects the installation mode (**admin** or **current user**).
+
 ## 1.23.7 (2023-08-10)
 
 * For new installs, Setup now defaults to non-administrative installation mode.
