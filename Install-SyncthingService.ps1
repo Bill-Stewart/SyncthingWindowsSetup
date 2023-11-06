@@ -708,21 +708,6 @@ function InstallService {
     New-Item $SyncthingConfigPath -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
     if ( -not $? ) { return $ERROR_CANNOT_MAKE }
   }
-  # Reset permissions for config directory
-  $argList = @(
-    '"{0}"' -f $SyncthingConfigPath
-    '/reset'
-    '/t'
-  )
-  Start-Program $ICACLS $argList | Out-Null
-  $argList = @(
-    '"{0}"' -f $SyncthingConfigPath
-    '/inheritance:r'
-    '/grant "*S-1-5-18:(OI)(CI)F"'
-    '/grant "*S-1-5-32-544:(OI)(CI)F"'
-    '/grant "{0}:(OI)(CI)M"' -f $serviceAccountUserName
-  )
-  Start-Program $ICACLS $argList | Out-Null
   # Reset "i" attribute for config directory (paradoxically, "+i" means
   # "not content indexed")
   $argList = @(
@@ -746,6 +731,21 @@ function InstallService {
   if ( $result -ne 0 ) { return $result }
   $result = Grant-UserRight $serviceAccountUserName SeServiceLogonRight
   if ( $result -ne 0 ) { return $result }
+  # Reset permissions for config directory
+  $argList = @(
+    '"{0}"' -f $SyncthingConfigPath
+    '/reset'
+    '/t'
+  )
+  Start-Program $ICACLS $argList | Out-Null
+  $argList = @(
+    '"{0}"' -f $SyncthingConfigPath
+    '/inheritance:r'
+    '/grant "*S-1-5-18:(OI)(CI)F"'
+    '/grant "*S-1-5-32-544:(OI)(CI)F"'
+    '/grant "{0}:(OI)(CI)M"' -f $serviceAccountUserName
+  )
+  Start-Program $ICACLS $argList | Out-Null
   # Install service if not installed
   if ( -not (Test-Service $serviceName) ) {
     $argList = @(

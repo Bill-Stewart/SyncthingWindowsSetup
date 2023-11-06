@@ -153,10 +153,16 @@ Filename: "{app}\{#ConfigurationPageName}.url"; \
 Name: startatboot; \
   Description: "{cm:TasksStartAtBoot}"; \
   Check: IsAdminInstallMode()
+Name: startserviceafterinstall; \
+  Description: "{cm:TasksStartServiceAfterInstall}"; \
+  Check: IsAdminInstallMode()
 ; Non-admin
 Name: startatlogon; \
   Description: "{cm:TasksStartAtLogon}"; \
   Check: (not IsAdminInstallMode()) and (not LogonTaskExists())
+Name: startafterinstall; \
+  Description: "{cm:TasksStartAfterInstall}"; \
+  Check: not IsAdminInstallMode()
 
 [Run]
 ; Admin: Add firewall rule silently
@@ -176,18 +182,18 @@ Filename: "{sys}\cscript.exe"; \
   Flags: runhidden; \
   StatusMsg: "{cm:RunStatusMsg}"; \
   Tasks: startatlogon
-; Admin post-install
-Filename: "{sys}\net.exe"; \
-  Parameters: "START ""{#ServiceName}"""; \
-  Description: "{cm:RunPostInstallStartServiceDescription}"; \
-  Flags: runascurrentuser runhidden nowait postinstall; \
-  Check: IsAdmininstallMode() and GetStartAfterInstall() and ServiceExists() and (not ServiceRunning())
-; Non-admin post-install
+; 'startafterinstall' task
 Filename: "{sys}\cscript.exe"; \
   Parameters: """{app}\{#ScriptNameStartSyncthing}"" /silent"; \
-  Description: "{cm:RunPostInstallStartDescription}"; \
-  Flags: runhidden nowait postinstall; \
-  Check: (not IsAdminInstallMode()) and GetStartAfterInstall() and FirewallRuleExists()
+  Flags: runhidden; \
+  StatusMsg: "{cm:RunStatusMsg}"; \
+  Check: (not IsAdminInstallMode()) and FirewallRuleExists(); \
+  Tasks: startafterinstall
+; postinstall
+Filename: "{app}\{#ConfigurationPageName}.url"; \
+  Description: "{cm:RunPostInstallOpenConfigPage}"; \
+  Flags: shellexec postinstall skipifsilent; \
+  Check: IsSyncthingRunning()
 
 [UninstallRun]
 ; Admin: remove firewall rule
@@ -369,6 +375,25 @@ begin
     finally
       CloseServiceHandle(Manager);
     end;
+end;
+
+function IsSyncthingRunning(): Boolean;
+var
+  AppDir, WQLQuery: string;
+  SWbemLocator, WMIService, SWbemObjectSet: Variant;
+begin
+  result := false;
+  AppDir := AddBackslash(ExpandConstant('{app}'));
+  StringChangeEx(AppDir, '\', '\\', true);
+  WQLQuery := Format('SELECT Name FROM Win32_Process' +
+    ' WHERE (ExecutablePath LIKE "%s%%") AND (Name = "syncthing.exe")', [AppDir]);
+  try
+    SWbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
+    WMIService := SWbemLocator.ConnectServer('', 'root\CIMV2');
+    SWbemObjectSet := WMIService.ExecQuery(WQLQuery);
+    result := (not VarIsNull(SWbemObjectSet)) and (SWbemObjectSet.Count > 0);
+  except
+  end; //try
 end;
 
 // Returns the 'Arguments' portion of the specified shortcut (lnk) file
@@ -648,11 +673,6 @@ begin
     result := '(current user)';
 end;
 
-function GetStartAfterInstall(): Boolean;
-begin
-  result := not ParamStrExists('/nostart');
-end;
-
 function ExecEx(const FileName, Params: string; const Hide: Boolean): Integer;
 var
   ShowCmd: Integer;
@@ -707,6 +727,12 @@ begin
     Params := Params + 'demand';
   Params := Params + ' -ServiceShutdownTimeout {#ServiceShutdownTimeout}';
   result := ExecEx(FileName, Params, true);
+  if WizardIsTaskSelected('startserviceafterinstall') then
+  begin
+    FileName := ExpandConstant('{sys}\net.exe');
+    Params := ExpandConstant('START "{#ServiceName}"');
+    result := ExecEx(FileName, Params, true);
+  end;
 end;
 
 function SetAppDirectoryPermissions(): Integer;

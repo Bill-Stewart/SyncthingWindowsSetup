@@ -118,7 +118,6 @@ Parameter                            | Description
 `/listenport=`_port_                 | **[*]** Specifies the TCP port number for the web GUI configuration page. The default port number is **8384**.
 `/relaysenabled=`_value_             | **[*]** Specifies whether relays are enabled (_value_ must be either **true** or **false**). The default value is **true** (i.e., relays are enabled).
 `/serviceaccountusername=`_username_ | For administrative installation mode, specifies the local service user account user name. The default user name is **SyncthingServiceAcct**.
-`/nostart`                           | Prevents Syncthing from starting automatically after the installation completes. The default is to start Syncthing when installation completes.
 
 Please note the following:
 
@@ -222,10 +221,12 @@ Once the local service user account has "Modify" permissions for the folder, you
 
 The **Select Additional Tasks** wizard page in Setup specifies additional tasks that Setup should perform. Available tasks depend on whether Setup runs in administrative (all users) or non administrative (current user) installation mode.
 
-Task Description                                        | Name           | Installation Mode
-----------------                                        | ----           | -----------------
-Start Syncthing service automatically when system boots | `startatboot`  | All users
-Start Syncthing automatically when logging on           | `startatlogon` | Current user
+Task Description                                        | Name                       | Installation Mode
+----------------                                        | ----                       | -----------------
+Start Syncthing service automatically when system boots | `startatboot`              | All users
+Start Syncthing service after installation              | `startserviceafterinstall` | All users
+Start Syncthing automatically when logging on           | `startatlogon`             | Current user
+Start Syncthing after installation                      | `startafterinstall`        | Current user
 
 The `/tasks` and `/mergetasks` command line parameters (see [Setup Command Line Parameters](#setup-command-line-parameters)) specify which tasks are selected (by default, all tasks are selected).
 

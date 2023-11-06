@@ -27,12 +27,13 @@ ShortcutNameStartSyncthingComment=Starts Syncthing as the current user.
 ShortcutNameStopSyncthing=Stop Syncthing
 ShortcutNameStopSyncthingComment=Stops Syncthing.
 ; [Tasks]
-TasksStartAtBoot=&Start Syncthing service automatically when system boots
-TasksStartAtLogon=&Start Syncthing automatically when logging on
+TasksStartAtBoot=Start Syncthing service &automatically when system boots
+TasksStartServiceAfterInstall=Start Syncthing service after &installation
+TasksStartAtLogon=Start Syncthing &automatically when logging on
+TasksStartAfterInstall=Start Syncthing after &installation
 ; [Run]
 RunStatusMsg=Completing setup tasks...
-RunPostInstallStartServiceDescription=&Start Syncthing service
-RunPostInstallStartDescription=&Start Syncthing
+RunPostInstallOpenConfigPage=&Open Syncthing configuration page
 ; Configuration pages
 ConfigPage0Caption=Select Configuration Settings
 ConfigPage0Description=How should Setup configure Syncthing?

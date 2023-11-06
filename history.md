@@ -2,6 +2,16 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.26.0 (2023-11-06)
+
+* Fixed: Configuration file path permission not set correctly for admin installs when service account doesn't yet exist.
+
+* Changed:
+
+  * Removed Setup `/nostart` command line parameter. Use the `startserviceafterinstall` (admin install mode) or `startafterinstall` (non admin install mode) tasks instead.
+
+  * Updated post-install page to allow user to open the Syncthing configuration page.
+
 ## 1.25.0 (2023-10-03)
 
 * Due to a number of security vendors automatically assuming NSSM is malware (even though it was being used legitimately), Setup now uses [shawl](https://github.com/mtkennerly/shawl) to run the Windows service. (The hope is that this will reduce the number of security software false positive malware notitifications when downloading and running Setup.)
