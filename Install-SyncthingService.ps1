@@ -746,8 +746,8 @@ function InstallService {
     '/grant "{0}:(OI)(CI)M"' -f $serviceAccountUserName
   )
   Start-Program $ICACLS $argList | Out-Null
-  # Install service if not installed
   if ( -not (Test-Service $serviceName) ) {
+    # Install service if not installed
     $argList = @(
       'create'
       '"{0}"' -f $serviceName
@@ -767,6 +767,15 @@ function InstallService {
     )
     $result = Start-Program $SC $argList
   }
+  else {
+    # Update service password
+    $argList = @(
+      'config'
+      '"{0}"' -f $serviceName
+      'password= "{0}"' -f (ConvertTo-String $serviceAccountPassword)
+    )
+    $result = Start-Program $SC $argList
+  }
   return $result
 }
 
@@ -783,7 +792,7 @@ function RemoveService {
   $service = Get-Service $serviceName -ErrorAction SilentlyContinue
   if ( $null -ne $service ) {
     if ( $service.Status -eq [ServiceProcess.ServiceControllerStatus]::Running ) {
-      $result = Start-Program $NET "STOP",$serviceName
+      $result = Start-Program $SERVMAN $serviceName,"--stop"
       if ( $result -ne 0 ) { return $result }
     }
     $result = Start-Program $SC "delete",$serviceName
@@ -810,13 +819,13 @@ $ScriptPath = Split-Path $MyInvocation.MyCommand.Path -Parent
 # Get paths to executables
 $ATTRIB = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::System)) "attrib.exe"
 $ICACLS = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::System)) "icacls.exe"
-$NET = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::System)) "net.exe"
 $SC = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::System)) "sc.exe"
+$SERVMAN = Join-Path $ScriptPath "ServMan.exe"
 $SHAWL = Join-Path $ScriptPath "shawl.exe"
 $SYNCTHING = Join-Path $ScriptPath "syncthing.exe"
 
 # Terminate script if we can't find an executable
-$ATTRIB,$ICACLS,$NET,$SC,$SHAWL,$SYNCTHING | Foreach-Object {
+$ATTRIB,$ICACLS,$SERVMAN,$SC,$SHAWL,$SYNCTHING | Foreach-Object {
   if ( -not (Test-Path $_) ) {
     Write-Error (Get-MessageDescription $ERROR_FILE_NOT_FOUND -asError)
     exit $ERROR_FILE_NOT_FOUND

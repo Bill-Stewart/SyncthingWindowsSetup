@@ -10,6 +10,7 @@
 #error This script requires Inno Setup 6 or later
 #endif
 
+#define UninstallIfVersionOlderThan "1.27.0"
 #define AppID "{1EEA2B6F-FD76-47D7-B74C-03E14CF043F9}"
 #define AppName "Syncthing"
 #define AppVersion GetStringFileInfo("bin\amd64\syncthing.exe",PRODUCT_VERSION)
@@ -73,6 +74,8 @@ Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; InfoBeforeFile
 #define protected Languages[0] "en"
 
 [Files]
+; Support automatic uninstall of older versions
+Source: "UninsIS.dll"; Flags: dontcopy
 ; WSH scripts (use preprocessor to support multiple languages)
 #define protected i 0
 #sub LocalizeWSHScripts
@@ -97,15 +100,17 @@ Source: "Reset-SyncthingServiceAccountPassword.ps1"; DestDir: "{app}"; Check: Is
 ; shawl license
 Source: "shawl-license.txt"; DestDir: "{app}"; Check: IsAdminInstallMode()
 ; 386 binaries
-Source: "bin\386\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode()
-Source: "shawl\386\shawl.exe";     DestDir: "{app}"; Flags: ignoreversion; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
-Source: "startps\386\startps.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
+Source: "bin\386\syncthing.exe";   DestDir: "{app}"; Check: not Is64BitInstallMode()
+Source: "ServMan\386\ServMan.exe"; DestDir: "{app}"; Check: not Is64BitInstallMode()
+Source: "shawl\386\shawl.exe";     DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
+Source: "startps\386\startps.exe"; DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
 ; amd64 binaries
-Source: "bin\amd64\syncthing.exe";   DestDir: "{app}"; Flags: ignoreversion solidbreak; Check: Is64BitInstallMode() and IsX64()
-Source: "shawl\amd64\shawl.exe";     DestDir: "{app}"; Flags: ignoreversion;            Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
-Source: "startps\amd64\startps.exe"; DestDir: "{app}"; Flags: ignoreversion;            Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
+Source: "bin\amd64\syncthing.exe";   DestDir: "{app}"; Flags: solidbreak; Check: Is64BitInstallMode() and IsX64()
+Source: "ServMan\amd64\ServMan.exe"; DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
+Source: "shawl\amd64\shawl.exe";     DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
+Source: "startps\amd64\startps.exe"; DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
 ; arm64 binaries
-Source: "bin\arm64\syncthing.exe"; DestDir: "{app}"; Flags: ignoreversion solidbreak; Check: Is64BitInstallMode() and IsARM64()
+Source: "bin\arm64\syncthing.exe"; DestDir: "{app}"; Flags: solidbreak; Check: Is64BitInstallMode() and IsARM64()
 
 [Dirs]
 Name: "{autoappdata}\{#AppName}"; Attribs: notcontentindexed; Check: IsAdminInstallMode()
@@ -135,6 +140,10 @@ Name: "{group}\{cm:ShortcutNameStopSyncthing}"; \
   Check: not IsAdminInstallMode()
 
 [INI]
+Filename: "{app}\SetupVersion.ini"; \
+  Section: "Setup"; \
+  Key: "Version"; \
+  String: "{#SetupVersion}"
 Filename: "{app}\{#ConfigurationPageName}.url"; \
   Section: "InternetShortcut"; \
   Key: "URL"; \
@@ -193,7 +202,7 @@ Filename: "{sys}\cscript.exe"; \
 Filename: "{app}\{#ConfigurationPageName}.url"; \
   Description: "{cm:RunPostInstallOpenConfigPage}"; \
   Flags: shellexec postinstall skipifsilent; \
-  Check: IsSyncthingRunning()
+  Check: ShowPostInstallCheckbox() and IsSyncthingRunning()
 
 [UninstallRun]
 ; Admin: remove firewall rule
@@ -209,108 +218,35 @@ Filename: "{sys}\cscript.exe"; \
   RunOnceId: removelogontask; \
   Check: not IsAdminInstallMode()
 
-[InstallDelete]
-Type: files; Name: "{app}\ConfigSyncthingService.js"
-Type: files; Name: "{app}\nssm.exe"
-
 [UninstallDelete]
+Type: files; Name: "{app}\SetupVersion.ini"
 Type: files; Name: "{app}\{#ConfigurationPageName}.url"
 Type: files; Name: "{app}\syncthing.exe.old"
 
 [Code]
 const
-  ERROR_MORE_DATA          = 234;
-  SC_MANAGER_CONNECT       = 1;
-  SERVICE_QUERY_STATUS     = 4;
-  SERVICE_RUNNING          = 4;
-  MIGRATION_FLAG_FILE_NAME = 'CONFIGURATION_HAS_BEEN_MIGRATED.txt';
-  CLSID_ShellLink          = '{00021401-0000-0000-C000-000000000046}';
-  MAX_PATH                 = 260;
-  STGM_READ                = $00000000;
-
-type
-  TServiceStatus = record
-    dwServiceType:             DWORD;
-    dwCurrentState:            DWORD;
-    dwControlsAccepted:        DWORD;
-    dwWin32ExitCode:           DWORD;
-    dwServiceSpecificExitCode: DWORD;
-    dwCheckPoint:              DWORD;
-    dwWaitHint:                DWORD;
-  end;
-
-  // Needed for GetLinkFileArguments()
-  TWin32FindDataW = record
-    dwFileAttributes:   DWORD;
-    ftCreationTime:     TFileTime;
-    ftLastAccessTime:   TFileTime;
-    ftLastWriteTime:    TFileTime;
-    nFileSizeHigh:      DWORD;
-    nFileSizeLow:       DWORD;
-    dwReserved0:        DWORD;
-    dwReserved1:        DWORD;
-    cFileName:          array[0..MAX_PATH - 1] of Char;
-    cAlternateFileName: array[0..13] of Char;
-  end;
-
-  // Needed for GetLinkFileArguments()
-  IShellLinkW = interface(IUnknown)
-    '{000214F9-0000-0000-C000-000000000046}'
-    function GetPath(pszFile: string; cchMaxPath: Integer;
-      var FindData: TWin32FindDataW; fFlags: DWORD): HRESULT;
-    procedure Dummy2;
-    procedure Dummy3;
-    function GetDescription(pszName: string; cchMaxName: Integer): HRESULT;
-    function SetDescription(pszName: string): HRESULT;
-    function GetWorkingDirectory(pszDir: string; cchMaxPath: Integer): HRESULT;
-    function SetWorkingDirectory(pszDir: string): HRESULT;
-    function GetArguments(pszArgs: string; cchMaxPath: Integer): HRESULT;
-    function SetArguments(pszArgs: string): HRESULT;
-    function GetHotkey(var pwHotkey: Word): HRESULT;
-    function SetHotkey(wHotkey: Word): HRESULT;
-    function GetShowCmd(out piShowCmd: Integer): HRESULT;
-    function SetShowCmd(iShowCmd: Integer): HRESULT;
-    function GetIconLocation(pszIconPath: string; cchIconPath: Integer;
-      out piIcon: Integer): HRESULT;
-    function SetIconLocation(pszIconPath: string; iIcon: Integer): HRESULT;
-    function SetRelativePath(pszPathRel: string; dwReserved: DWORD): HRESULT;
-    function Resolve(Wnd: HWND; fFlags: DWORD): HRESULT;
-    function SetPath(pszFile: string): HRESULT;
-  end;
-
-  // Needed for GetLinkFileArguments()
-  IPersist = interface(IUnknown)
-    '{0000010C-0000-0000-C000-000000000046}'
-    function GetClassID(var classID: TGUID): HRESULT;
-  end;
-
-  // Needed for GetLinkFileArguments()
-  IPersistFile = interface(IPersist)
-    '{0000010B-0000-0000-C000-000000000046}'
-    function IsDirty: HRESULT;
-    function Load(pszFileName: string; dwMode: LongInt): HRESULT;
-    function Save(pszFileName: string; fRemember: BOOL): HRESULT;
-    function SaveCompleted(pszFileName: string): HRESULT;
-    function GetCurFile(out pszFileName: string): HRESULT;
-  end;
+  ERROR_MORE_DATA               = 234;
+  ERROR_SERVICE_ALREADY_RUNNING = 1056;
+  ERROR_SERVICE_NOT_ACTIVE      = 1062;
 
 // Global variables
 var
-  ConfigPage0: TInputQueryWizardPage;                                     // Custom wizard page
-  AutoUpgradeInterval, ListenAddress, ListenPort, RelaysEnabled: string;  // Configuration page values
+  ConfigPage0: TInputQueryWizardPage;
+  // Configuration page values
+  AutoUpgradeInterval, ListenAddress, ListenPort, RelaysEnabled: string;
   ServiceAccountUserName: string;
 
 // Windows API functions
 function GetUserNameExW(NameFormat: Integer; lpNameBuffer: string; var nSize: DWORD): Boolean;
   external 'GetUserNameExW@secur32.dll stdcall';
-function OpenSCManager(lpMachineName: string; lpDatabaseName: string; dwDesiredAccess: DWORD): THandle;
-  external 'OpenSCManagerW@advapi32.dll stdcall';
-function OpenService(hSCManager: THandle; lpServiceName: string; dwDesiredAccess: DWORD): THandle;
-  external 'OpenServiceW@advapi32.dll stdcall';
-function QueryServiceStatus(hService: THandle; out lpServiceStatus: TServiceStatus): BOOL;
-  external 'QueryServiceStatus@advapi32.dll stdcall';
-function CloseServiceHandle(hSCObject: THandle): BOOL;
-  external 'CloseServiceHandle@advapi32.dll stdcall';
+
+// UninsIS.dll functions
+function DLLCompareVersionStrings(Version1, Version2: string): Integer;
+  external 'CompareVersionStrings@files:UninsIS.dll stdcall setuponly';
+function DLLIsISPackageInstalled(AppId: string; Is64BitInstallMode, IsAdminInstallMode: DWORD): DWORD;
+  external 'IsISPackageInstalled@files:UninsIS.dll stdcall setuponly';
+function DLLUninstallISPackage(AppId: string; Is64BitInstallMode, IsAdminInstallMode: DWORD): DWORD;
+  external 'UninstallISPackage@files:UninsIS.dll stdcall setuponly';
 
 function GetFullUserName(): string;
 var
@@ -335,104 +271,70 @@ begin
   end;
 end;
 
-function ServiceExists(): Boolean;
-var
-  Manager, Service: THandle;
-  Status: TServiceStatus;
+function BoolToStr(const B: Boolean): string;
 begin
-  result := false;
-  Manager := OpenSCManager('', '', SC_MANAGER_CONNECT);
-  if Manager <> 0 then
-    try
-      Service := OpenService(Manager, '{#ServiceName}', SERVICE_QUERY_STATUS);
-      if Service <> 0 then
-        try
-          result := QueryServiceStatus(Service, Status);
-        finally
-          CloseServiceHandle(Service);
-        end;
-    finally
-      CloseServiceHandle(Manager);
-    end;
+  if B then
+    result := 'true'
+  else
+    result := 'false';
 end;
 
-function ServiceRunning(): Boolean;
-var
-  Manager, Service: THandle;
-  Status: TServiceStatus;
-begin
-  result := false;
-  Manager := OpenSCManager('', '', SC_MANAGER_CONNECT);
-  if Manager <> 0 then
-    try
-      Service := OpenService(Manager, '{#ServiceName}', SERVICE_QUERY_STATUS);
-      try
-        if QueryServiceStatus(Service, Status) then
-          result := Status.dwCurrentState = SERVICE_RUNNING;
-      finally
-        CloseServiceHandle(Service);
-      end;
-    finally
-      CloseServiceHandle(Manager);
-    end;
-end;
-
+// Checks if Syncthing process is running
 function IsSyncthingRunning(): Boolean;
 var
+  MilliSecs, Count: Integer;
   AppDir, WQLQuery: string;
   SWbemLocator, WMIService, SWbemObjectSet: Variant;
 begin
+  MilliSecs := 1000;
   result := false;
-  AppDir := AddBackslash(ExpandConstant('{app}'));
-  StringChangeEx(AppDir, '\', '\\', true);
-  WQLQuery := Format('SELECT Name FROM Win32_Process' +
-    ' WHERE (ExecutablePath LIKE "%s%%") AND (Name = "syncthing.exe")', [AppDir]);
-  try
-    SWbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
-    WMIService := SWbemLocator.ConnectServer('', 'root\CIMV2');
-    SWbemObjectSet := WMIService.ExecQuery(WQLQuery);
-    result := (not VarIsNull(SWbemObjectSet)) and (SWbemObjectSet.Count > 0);
-  except
-  end; //try
-end;
-
-// Returns the 'Arguments' portion of the specified shortcut (lnk) file
-function GetLinkFileArguments(const FileName: string): string;
-var
-  ComObject: IUnknown;
-  ShellLink: IShellLinkW;
-  PersistFile: IPersistFile;
-begin
-  ComObject := CreateComObject(StringToGuid(CLSID_ShellLink));
-  PersistFile := IPersistFile(ComObject);
-  OleCheck(PersistFile.Load(FileName, STGM_READ));
-  ShellLink := IShellLinkW(ComObject);
-  SetLength(result, MAX_PATH);
-  OleCheck(ShellLink.GetArguments(result, MAX_PATH));
-  SetLength(result, Pos(#0, result) - 1);
-end;
-
-// Returns the full path and name of the first shortcut (lnk) file containing
-// the specified substring in its 'Arguments'; returns an empty string if none
-function GetShortcutFileNameContainingStringInArgs(Path, Substring: string): string;
-var
-  FileName: string;
-  FindRec: TFindRec;
-begin
-  result := '';
-  if FindFirst(AddBackslash(Path) + '*.lnk', FindRec) then
+  for Count := 0 to 9 do
+  begin
+    AppDir := AddBackslash(ExpandConstant('{app}'));
+    StringChangeEx(AppDir, '\', '\\', true);
+    WQLQuery := Format('SELECT Name FROM Win32_Process' +
+      ' WHERE (ExecutablePath LIKE "%s%%") AND (Name = "syncthing.exe")', [AppDir]);
+    Log(FmtMessage(CustomMessage('IsRunningWMIQuery'), [WQLQuery]));
     try
-      repeat
-        FileName := AddBackslash(Path) + FindRec.Name;
-        if Pos(AnsiLowercase(Substring), AnsiLowercase(GetLinkFileArguments(FileName))) > 0 then
-        begin
-          result := FileName;
-          break;
-        end;
-      until not FindNext(FindRec);
-    finally
-      FindClose(FindRec);
-    end;
+      SWbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
+      WMIService := SWbemLocator.ConnectServer('', 'root\CIMV2');
+      SWbemObjectSet := WMIService.ExecQuery(WQLQuery);
+      result := (not VarIsNull(SWbemObjectSet)) and (SWbemObjectSet.Count > 0);
+      Log(FmtMessage(CustomMessage('IsRunningWMIQueryResult'), [BoolToStr(result)]));
+    except
+      Log(CustomMessage('IsRunningWMIExceptionMessage'));
+      break;
+    end; //try
+    if result then
+      break;
+    Log(FmtMessage(CustomMessage('IsRunningWMIPauseMessage'), [IntToStr(MilliSecs)]));
+    Sleep(MilliSecs);
+  end;
+end;
+
+// UninsIS.dll - Returns true if package is detected as installed, or false otherwise
+function IsISPackageInstalled(): Boolean;
+begin
+  result := DLLIsISPackageInstalled('{#AppID}',  // AppId
+    DWORD(Is64BitInstallMode()),                 // Is64BitInstallMode
+    DWORD(IsAdminInstallMode())) = 1;            // IsAdminInstallMode
+end;
+
+// UninsIS.dll - Returns:
+// < 0 if Version1 < Version2
+// 0   if Version1 = Version2
+// > 0 if Version1 > Version2
+function CompareVersionStrings(const Version1, Version2: string): Integer;
+begin
+  result := DLLCompareVersionStrings(Version1, Version2);
+end;
+
+// UninsIS.dll - Returns 0 for success, non-zero for failure
+function UninstallISPackage(): DWORD;
+begin
+  result := DLLUninstallISPackage('{#AppID}',  // AppId
+    DWORD(Is64BitInstallMode()),               // Is64BitInstallMode
+    DWORD(IsAdminInstallMode()));              // IsAdminInstallMode
 end;
 
 function ParamStrExists(const Param: string): Boolean;
@@ -446,6 +348,11 @@ begin
     if result then
       exit;
   end;
+end;
+
+function ShowPostInstallCheckbox(): Boolean;
+begin
+  result := not ParamStrExists('/noconfigpage');
 end;
 
 function InitializeSetup(): Boolean;
@@ -695,6 +602,47 @@ begin
     Log('Exec failed: ' + SysErrorMessage(result) + ' (' + IntToStr(result) + ')');
 end;
 
+function ServiceExists(): Boolean;
+var
+  FileName, Params: string;
+begin
+  FileName := ExpandConstant('{app}\ServMan.exe');
+  Params := '--exists "{#ServiceName}"';
+  result := ExecEx(FileName, Params, true) = 0;
+end;
+
+function ServiceRunning(): Boolean;
+var
+  FileName, Params: string;
+begin
+  FileName := ExpandConstant('{app}\ServMan.exe');
+  Params := '--state "{#ServiceName}"';
+  // ServMan --state exit code 904 = running
+  result := ExecEx(FileName, Params, true) = 904;
+end;
+
+function StopService(): Boolean;
+var
+  FileName, Params: string;
+  Status: Integer;
+begin
+  FileName := ExpandConstant('{app}\ServMan.exe');
+  Params := ' --stop "{#ServiceName}"';
+  Status := ExecEx(FileName, Params, true);
+  result := (Status = 0) or (Status = ERROR_SERVICE_NOT_ACTIVE);
+end;
+
+function StartService(): Boolean;
+var
+  FileName, Params: string;
+  Status: Integer;
+begin
+  FileName := ExpandConstant('{app}\ServMan.exe');
+  Params := '--start "{#ServiceName}"';
+  Status := ExecEx(FileName, Params, true);
+  result := (Status = 0) or (Status = ERROR_SERVICE_ALREADY_RUNNING);
+end;
+
 function FirewallRuleExists(): Boolean;
 begin
   result := ExecEx(ExpandConstant('{sys}\cscript.exe'),
@@ -727,12 +675,6 @@ begin
     Params := Params + 'demand';
   Params := Params + ' -ServiceShutdownTimeout {#ServiceShutdownTimeout}';
   result := ExecEx(FileName, Params, true);
-  if WizardIsTaskSelected('startserviceafterinstall') then
-  begin
-    FileName := ExpandConstant('{sys}\net.exe');
-    Params := ExpandConstant('START "{#ServiceName}"');
-    result := ExecEx(FileName, Params, true);
-  end;
 end;
 
 function SetAppDirectoryPermissions(): Integer;
@@ -764,49 +706,15 @@ begin
   result := ExecEx(FileName, Params, true);
 end;
 
-function StopService(): Integer;
-begin
-  result := 0;
-  if ServiceExists() then
-    result := ExecEx(ExpandConstant('{sys}\net.exe'), 'STOP "{#ServiceName}"', true);
-end;
-
-function StartService(): Integer;
-begin
-  result := 0;
-  if ServiceExists() and (not ServiceRunning()) then
-    result := ExecEx(ExpandConstant('{app}\net.exe'), 'START "{#ServiceName}"', true);
-end;
-
 function RemoveService(): Integer;
 var
   FileName, Params: string;
 begin
-  result := 0;
-  if ServiceExists() then
-  begin
-    FileName := ExpandConstant('{app}\startps.exe');
-    Params := ExpandConstant('-Dqnw -W Hidden "{app}\Install-SyncthingService.ps1" -- -Remove'
-      + ' -ServiceAccountUserName "' + ServiceAccountUserName + '"'
-      + ' -ServiceName "{#ServiceName}"');
-    result := ExecEx(FileName, Params, true);
-  end;
-end;
-
-function PrepareToInstall(var NeedsRestart: Boolean): string;
-begin
-  result := '';
-  if IsAdminInstallMode() then
-  begin
-    if ServiceExists() then
-      RemoveService();
-  end
-  else
-  begin
-    ExecEx(ExpandConstant('{sys}\cscript.exe'),
-      ExpandConstant('"{app}\{#ScriptNameStopSyncthing}" /silent'),
-      true);
-  end;
+  FileName := ExpandConstant('{app}\startps.exe');
+  Params := ExpandConstant('-Dqnw -W Hidden "{app}\Install-SyncthingService.ps1" -- -Remove'
+    + ' -ServiceAccountUserName "' + ServiceAccountUserName + '"'
+    + ' -ServiceName "{#ServiceName}"');
+  result := ExecEx(FileName, Params, true);
 end;
 
 function JoinPath(Path1, Path2: string): string;
@@ -821,88 +729,42 @@ begin
   result := Path1 + '\' + Path2;
 end;
 
-function GetLocalServiceLocalAppDataPath(): string;
+function PrepareToInstall(var NeedsRestart: Boolean): string;
 var
-  SWbemLocator, WMIService, UserProfile: Variant;
+  InstalledSetupVersion: string;
 begin
-  try
-    SWbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
-    WMIService := SWbemLocator.ConnectServer('.', 'root\CIMV2');
-    UserProfile := WMIService.Get('Win32_UserProfile.SID="S-1-5-19"');
-    result := JoinPath(UserProfile.LocalPath, 'AppData\Local');
-  except
-    result := '';
-  end;
-end;
-
-function LocalServiceConfigMigrationNeeded(): Boolean;
-var
-  LocalServiceConfigPath, LocalServiceConfigFileName,
-    AppConfigPath, AppConfigFileName, FlagFileName: string;
-begin
-  LocalServiceConfigPath := JoinPath(GetLocalServiceLocalAppDataPath(), 'Syncthing');
-  LocalServiceConfigFileName := JoinPath(LocalServiceConfigPath, 'config.xml');
-  AppConfigPath := JoinPath(ExpandConstant('{autoappdata}'), 'Syncthing');
-  AppConfigFileName := JoinPath(AppConfigPath, 'config.xml');
-  FlagFileName := JoinPath(LocalServiceConfigPath, MIGRATION_FLAG_FILE_NAME);
-  result := FileExists(LocalServiceConfigFileName) and
-    (not FileExists(AppConfigFileName)) and
-    (not FileExists(FlagFileName));
-  if result then
+  result := '';
+  if IsISPackageInstalled() then
   begin
-    Log(FmtMessage(CustomMessage('MigrationNeededMessage'), [LocalServiceConfigPath, AppConfigPath]));
-  end;
-end;
-
-function MigrateLocalServiceConfig(): Boolean;
-var
-  Restart: Boolean;
-  LocalServiceConfigPath, AppConfigPath, FileName, Params: string;
-begin
-  // Need to stop and restart service (if running) due to in-use files
-  Restart := ServiceRunning();
-  if Restart then
-    StopService();
-  LocalServiceConfigPath := JoinPath(GetLocalServiceLocalAppDataPath(), 'Syncthing');
-  AppConfigPath := JoinPath(ExpandConstant('{autoappdata}'), 'Syncthing');
-  FileName := ExpandConstant('{sys}\xcopy.exe');
-  Params := FmtMessage('"%1\*" "%2" /C /E /F /H /I /K /R /Y', [LocalServiceConfigPath, AppConfigPath]);
-  result := ExecEx(FileName, Params, true) = 0;
-  if result then
-  begin
-    Log(FmtMessage(CustomMessage('MigrationSucceededMessage'), [LocalServiceConfigPath, AppConfigPath]));
-    SaveStringToFile(JoinPath(LocalServiceConfigPath, MIGRATION_FLAG_FILE_NAME),
-      FmtMessage(CustomMessage('MigratedConfigFlagFileText') + #13#10, [AppConfigPath]),
-      false);
-  end
-  else
-  begin
-    Log(FmtMessage(CustomMessage('MigrationFailedMessage'), [LocalServiceConfigPath, AppConfigPath]));
-  end;
-  if Restart then
-    StartService();
-end;
-
-procedure RemoveMigratedConfig();
-var
-  LocalServiceConfigPath, ConfigFileName, FlagFileName: string;
-begin
-  LocalServiceConfigPath := JoinPath(GetLocalServiceLocalAppDataPath(), 'Syncthing');
-  ConfigFileName := JoinPath(LocalServiceConfigPath, 'config.xml');
-  FlagFileName := JoinPath(LocalServiceConfigPath, MIGRATION_FLAG_FILE_NAME);
-  if FileExists(ConfigFileName) and FileExists(FlagFileName) then
-  begin
-    if DelTree(LocalServiceConfigPath, true, true, true) then
-      Log(FmtMessage(CustomMessage('MigratedConfigRemoveSuccess'), [LocalServiceConfigPath]))
+    InstalledSetupVersion := GetIniString('Setup', 'Version', '', ExpandConstant('{app}\SetupVersion.ini'));
+    if (InstalledSetupVersion = '') or
+      (CompareVersionStrings(InstalledSetupVersion, '{#UninstallIfVersionOlderThan}') < 0) then
+    begin
+      // Uninstall if:
+      // Package is installed AND
+      //   Can't get setup version from SetupVersion.ini, OR
+      //   Version in SetupVersion.ini is older than {#UninstallIfVersionOlderThan}
+      if UninstallISPackage() <> 0 then
+      begin
+        result := CustomMessage('PrepareToInstallErrorMessage0');
+        exit;
+      end;
+    end;
+    if IsAdminInstallMode() then
+    begin
+      if ServiceExists() and ServiceRunning() then
+        StopService();
+    end
     else
-      Log(FmtMessage(CustomMessage('MigratedConfigRemoveFailure'), [LocalServiceConfigPath]));
+    begin
+      ExecEx(ExpandConstant('{sys}\cscript.exe'),
+        ExpandConstant('"{app}\{#ScriptNameStopSyncthing}" /silent'),
+        true);
+    end;
   end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
-var
-  LocalServiceConfigPath, AppConfigPath, ShortcutFileName: string;
-  RemoveOldConfig: Boolean;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -910,28 +772,13 @@ begin
     begin
       InstallOrResetService();
       SetAppDirectoryPermissions();
-      if LocalServiceConfigMigrationNeeded() then
-      begin
-        if MigrateLocalServiceConfig() then
-        begin
-          LocalServiceConfigPath := JoinPath(GetLocalServiceLocalAppDataPath(), 'Syncthing');
-          AppConfigPath := JoinPath(ExpandConstant('{autoappdata}'), 'Syncthing');
-          RemoveOldConfig := SuppressibleTaskDialogMsgBox(CustomMessage('MigratedConfigRemoveOldInstruction'),
-            FmtMessage(CustomMessage('MigratedConfigRemoveOldText'), [LocalServiceConfigPath, AppConfigPath]),
-            mbConfirmation,
-            MB_YESNO, [CustomMessage('MigratedConfigRemoveOldButton1'), CustomMessage('MigratedConfigRemoveOldButton2')],
-            0,
-            IDYES) = IDYES;
-          if RemoveOldConfig then
-            RemoveMigratedConfig();
-        end;
-      end;
-      // Delete legacy NSSM shortcut if needed
-      ShortcutFileName := GetShortcutFileNameContainingStringInArgs(ExpandConstant('{group}'), 'ConfigSyncthingService.js');
-      if ShortcutFileName <> '' then
-        DeleteFile(ShortcutFileName);
     end;
     SetupConfiguration();
+    if WizardIsTaskSelected('startserviceafterinstall') then
+    begin
+      if ServiceExists() and (not ServiceRunning()) then
+        StartService();
+    end;
   end;
 end;
 
@@ -942,7 +789,11 @@ begin
     if IsAdminInstallMode() then
     begin
       if ServiceExists() then
+      begin
+        if ServiceRunning() then
+          StopService();
         RemoveService();
+      end;
     end
     else
     begin

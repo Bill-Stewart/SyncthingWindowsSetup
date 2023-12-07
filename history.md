@@ -2,6 +2,26 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.27.0 (2023-12-07)
+
+* Fixed: Service reinstall did not reset the service account password under some circumstances.
+
+* Updated check for Syncthing running state to wait for up to 10 seconds at post-install.
+
+* Updated shawl utility.
+
+* Changed service start/stop to the [ServMan](https://github.com/Bill-Stewart/ServMan) utility.
+
+* Changed:
+
+  * Upgrading from a version older than 1.27.0 performs an automatic uninstall first. This change was made to clean up legacy upgrade code. Due to this change, if you upgrade an administrative install from version 1.19.1 the configuration will not be migrated. You must first upgrade to version 1.26.1 to migrate the configuration, and then upgrade to 1.27.0 or later.
+
+  * Added `/noconfigpage` parameter to hide checkbox on post-install page.
+
+  * Added `SetupVersion.ini` to manage Setup version for later upgrades.
+
+* Automatic uninstall provided by [UninsIS.dll](https://github.com/Bill-Stewart/UninsIS/).
+
 ## 1.26.0 (2023-11-06)
 
 * Fixed: Configuration file path permission not set correctly for admin installs when service account doesn't yet exist.

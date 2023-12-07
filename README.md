@@ -11,8 +11,8 @@ Syncthing Windows Setup is a lightweight yet full-featured Windows installer for
 - [Download](#download)
 - [Background](#background)
 - [Version History](#version-history)
-- [Upgrading Administrative Installations from Version 1.19.1 or Older](#upgrading-administrative-installations-from-version-1191-or-older)
-- [Downgrading Administrative Installations to Version 1.24.0 or Older](#downgrading-administrative-installations-to-version-1240-or-older)
+- [Upgrading Administrative Installations](#upgrading-administrative-installations)
+- [Downgrading an Installation](#downgrading-an-installation)
 - [Setup Command Line Parameters](#setup-command-line-parameters)
 - [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)
   - [Non Administrative (Current User) Installation Mode](#non-administrative-current-user-installation-mode)
@@ -73,23 +73,15 @@ Syncthing Windows Setup (herein referred to as "Setup") provides a [Syncthing](h
 
 See `history.md`.
 
-## Upgrading Administrative Installations from Version 1.19.1 or Older
+## Upgrading Administrative Installations
 
 Administrative installations in versions 1.19.1 and older configured the Windows service to run using the Windows built-in **LocalService** account. To improve security, Setup versions newer than 1.19.1 configure the Windows service to run using a local service user account instead (**SyncthingServiceAcct** by default). As a part of this change, the Syncthing configuration data is now located in the _CommonAppData_`\Syncthing` folder (e.g., `C:\ProgramData\Syncthing`).
 
-When upgrading from version 1.19.1 or older, Setup automatically migrates the Syncthing configuration folder from the legacy **LocalService** account user profile (e.g., `C:\Windows\ServiceProfiles\LocalService\ApplicationData\Local\Syncthing`) to the new location. If the migration succeeds, Setup displays a dialog asking whether you want to remove the legacy configuration folder. (In [silent installation mode](#silent-install-and-uninstall), Setup automatically removes the legacy configuration folder if the migration succeeded.)
+If you upgrade an administrative installation from version 1.19.1 or older, Setup version 1.27.0 and newer will uninstall the old version and install the new version, but it will no longer migrate the configuration data. Because of this change, it is recommended to first upgrade to version 1.26.1 to migrate the configuration data, and then upgrade again to version 1.27.0 or later.
 
-After upgrading from version 1.19.1 or older, you must follow the steps in [Granting Folder Permissions for the Service Account](#granting-folder-permissions-for-the-service-account) to grant the local service user account permission to each synchronized folder in your Syncthing configuration. Until you do so, the Syncthing GUI configuration page will report "access denied" errors because the local service user account does not have "Modify" permissions to the folder(s).
+## Downgrading an Installation
 
-## Downgrading Administrative Installations to Version 1.24.0 or Older
-
-Administrative installations in version 1.24.0 and older used a different tool to run the Windows service. If you installed using administrative installation mode and want to downgrade to version 1.24.0 or older, do the following:
-
-1. Run Setup, note the settings on the **Select Configuration Settings** page, then exit Setup.
-
-2. Uninstall the current version. This step is necessary to remove the service.
-
-3. Reinstall the older version in administrative installation mode, using the same configuration settings on the **Select Configuration Settings** page. (Keep in mind that newer versions of Setup may have additional configuration settings that aren't present in older versions.)
+To downgrade an installation, first uninstall the current installed version, and the reinstall the older version. (Keep in mind that the Syncthing executable will automatically upgrade itself unless automatic upgrades are disabled.)
 
 ## Setup Command Line Parameters
 
@@ -118,6 +110,7 @@ Parameter                            | Description
 `/listenport=`_port_                 | **[*]** Specifies the TCP port number for the web GUI configuration page. The default port number is **8384**.
 `/relaysenabled=`_value_             | **[*]** Specifies whether relays are enabled (_value_ must be either **true** or **false**). The default value is **true** (i.e., relays are enabled).
 `/serviceaccountusername=`_username_ | For administrative installation mode, specifies the local service user account user name. The default user name is **SyncthingServiceAcct**.
+`/noconfigpage`                      | Prevents the "Open Syncthing configuration page" checkbox from appearing on the final Setup wizard page.
 
 Please note the following:
 

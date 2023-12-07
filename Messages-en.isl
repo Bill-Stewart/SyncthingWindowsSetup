@@ -59,16 +59,11 @@ ReadyMemoConfigItem1=GUI configuration page listen address is
 ReadyMemoConfigItem2=GUI configuration page listen port is
 ReadyMemoConfigItem3Disabled=Relays are disabled
 ReadyMemoConfigItem3Enabled=Relays are enabled
-; Configuration migration messages
-MigrationNeededMessage=Setup has detected that the Syncthing configuration should be migrated from "%1" to "%2"
-MigrationSucceededMessage=Setup successfully migrated the Syncthing configuration from "%1" to "%2"
-MigrationFailedMessage=Setup failed to migrate the Syncthing configuration from "%1" to "%2"
-MigratedConfigFlagFileText=This Syncthing configuration has been migrated to the following folder:%n%n%1
-MigratedConfigRemoveOldInstruction=Remove the legacy Syncthing configuration folder?
-MigratedConfigRemoveOldText=Setup has successfully migrated the following legacy Syncthing configuration folder:%n%n%1%n%nThe Syncthing configuration is now stored in the following folder:%n%n%2%n%nShould Setup remove the legacy Syncthing configuration folder?
-MigratedConfigRemoveOldButton1=&Remove the legacy configuration folder (recommended)
-MigratedConfigRemoveOldButton2=&Do not remove the legacy configuration folder
-MigratedConfigRemoveSuccess=Removed migrated configuration folder "%1"
-MigratedConfigRemoveFailure=Failed to remove migrated configuration folder "%1"
+; Prepare to install error
+PrepareToInstallErrorMessage0=Setup was unable to uninstall the version currently installed on the system. To perform an upgrade, you must uninstall the old version that is currently installed before you will be able to install this version.
 ; Misc.
 RunCommandMessage=Run command: "%1" %2
+IsRunningWMIQuery=WMI query: %1
+IsRunningWMIQueryResult=WMI query result: %1
+IsRunningWMIPauseMessage=Process not detected; pausing for %1 milliseconds
+IsRunningWMIExceptionMessage=IsSyncthingRunning function encountered an exception.
