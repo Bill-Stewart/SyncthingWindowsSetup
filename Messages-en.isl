@@ -61,6 +61,7 @@ ReadyMemoConfigItem3Disabled=Relays are disabled
 ReadyMemoConfigItem3Enabled=Relays are enabled
 ; Prepare to install error
 PrepareToInstallErrorMessage0=Setup was unable to uninstall the version currently installed on the system. To perform an upgrade, you must uninstall the old version that is currently installed before you will be able to install this version.
+PrepareToInstallErrorMessage1=Setup has detected that the installed version (%1) is newer than this version (%2). To perform a downgrade, first uninstall the installed version, and then install this version.
 ; Misc.
 RunCommandMessage=Run command: "%1" %2
 IsRunningWMIQuery=WMI query: %1

@@ -1,4 +1,4 @@
-﻿; Syncthing.iss - Syncthing Windows Setup
+; Syncthing.iss - Syncthing Windows Setup
 ; Written by Bill Stewart (bstewart AT iname.com) for Syncthing
 
 ; Windows Inno Setup installer for Syncthing (https://syncthing.net/)
@@ -699,7 +699,7 @@ begin
   else
     Params := Params + ' /currentuser';
   Params := Params + ' /autoupgradeinterval:' + AutoUpgradeInterval
-    + ' /guiaddress:"' + ListenAddress + ':' + ListenPort + '"' +
+    + ' /guiaddress:"' + ListenAddress + ':' + ListenPort + '"'
     + ' /relaysenabled:' + RelaysEnabled;
   if WizardSilent() then
     Params := Params + ' /silent';
@@ -748,7 +748,13 @@ begin
       begin
         result := CustomMessage('PrepareToInstallErrorMessage0');
         exit;
-      end;
+      end
+    end
+    else if CompareVersionStrings(InstalledSetupVersion, '{#SetupVersion}') > 0 then
+    begin
+      // Installed version > installing version = downgrade
+      result := FmtMessage(CustomMessage('PrepareToInstallErrorMessage1'), [InstalledSetupVersion, '{#SetupVersion}']);
+      exit;
     end;
     if IsAdminInstallMode() then
     begin

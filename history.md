@@ -1,6 +1,10 @@
-﻿# Syncthing Windows Setup Version History
+# Syncthing Windows Setup Version History
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
+
+## 1.27.1 (2023-12-11)
+
+* Added: Prevent accidental downgrades by canceling installation if installing version is lower than installed version.
 
 ## 1.27.0 (2023-12-07)
 

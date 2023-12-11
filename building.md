@@ -1,4 +1,4 @@
-﻿<!-- omit in toc -->
+<!-- omit in toc -->
 # Building Syncthing Windows Setup
 
 - [Listing of Files](#listing-of-files)

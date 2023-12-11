@@ -1,4 +1,4 @@
-﻿<!-- omit in toc -->
+<!-- omit in toc -->
 # Syncthing Windows Setup
 
 Syncthing Windows Setup is a lightweight yet full-featured Windows installer for the open-source [Syncthing](https://syncthing.net) file-synchronization application.
