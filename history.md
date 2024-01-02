@@ -2,6 +2,12 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.27.2 (2024-01-02)
+
+* Syncthing 1.27.1 and later is built using Go >= version 1.21.5, which no longer supports Windows versions older than Windows 10/Server 2016. Accordingly, Setup requires at least Windows 10/Server 2016 or later to install Syncthing. (See https://github.com/golang/go/issues/64622 and https://forum.syncthing.net/t/21248 for further information.)
+
+* Minor tweaks.
+
 ## 1.27.1 (2023-12-11)
 
 * Added: Prevent accidental downgrades by canceling installation if installing version is lower than installed version.

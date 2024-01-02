@@ -8,6 +8,7 @@ Syncthing Windows Setup is a lightweight yet full-featured Windows installer for
 <!-- omit in toc -->
 ## Table of Contents
 
+- [System Requirements](#system-requirements)
 - [Download](#download)
 - [Background](#background)
 - [Version History](#version-history)
@@ -42,6 +43,10 @@ Syncthing Windows Setup is a lightweight yet full-featured Windows installer for
 - [Acknowledgments](#acknowledgments)
 
 ---
+
+## System Requirements
+
+The Windows build of Syncthing is compiled using the Go language, which requires a recent operating system version. Accordingly, installing Syncthing using this installer requires Windows 10 or later.
 
 ## Download
 

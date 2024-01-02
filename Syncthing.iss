@@ -39,6 +39,7 @@ AppPublisher={#AppPublisher}
 AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
+MinVersion=10
 ArchitecturesInstallIn64BitMode=x64 arm64
 CloseApplications=yes
 CloseApplicationsFilter=*.exe,*.pdf
@@ -238,7 +239,7 @@ var
 
 // Windows API functions
 function GetUserNameExW(NameFormat: Integer; lpNameBuffer: string; var nSize: DWORD): Boolean;
-  external 'GetUserNameExW@secur32.dll stdcall';
+  external 'GetUserNameExW@secur32.dll stdcall setuponly';
 
 // UninsIS.dll functions
 function DLLCompareVersionStrings(Version1, Version2: string): Integer;
@@ -288,13 +289,13 @@ var
 begin
   MilliSecs := 1000;
   result := false;
+  AppDir := AddBackslash(ExpandConstant('{app}'));
+  StringChangeEx(AppDir, '\', '\\', true);
+  WQLQuery := Format('SELECT Name FROM Win32_Process' +
+    ' WHERE (ExecutablePath LIKE "%s%%") AND (Name = "syncthing.exe")', [AppDir]);
+  Log(FmtMessage(CustomMessage('IsRunningWMIQuery'), [WQLQuery]));
   for Count := 0 to 9 do
   begin
-    AppDir := AddBackslash(ExpandConstant('{app}'));
-    StringChangeEx(AppDir, '\', '\\', true);
-    WQLQuery := Format('SELECT Name FROM Win32_Process' +
-      ' WHERE (ExecutablePath LIKE "%s%%") AND (Name = "syncthing.exe")', [AppDir]);
-    Log(FmtMessage(CustomMessage('IsRunningWMIQuery'), [WQLQuery]));
     try
       SWbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
       WMIService := SWbemLocator.ConnectServer('', 'root\CIMV2');
@@ -627,7 +628,7 @@ var
   Status: Integer;
 begin
   FileName := ExpandConstant('{app}\ServMan.exe');
-  Params := ' --stop "{#ServiceName}"';
+  Params := '--stop "{#ServiceName}"';
   Status := ExecEx(FileName, Params, true);
   result := (Status = 0) or (Status = ERROR_SERVICE_NOT_ACTIVE);
 end;
