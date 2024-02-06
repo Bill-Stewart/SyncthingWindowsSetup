@@ -23,7 +23,7 @@ ServiceDescription=Syncthing securely synchronizes files between two or more com
 ShortcutNameConfigurationPage=Syncthing Configuration Page
 ShortcutNameConfigurationPageComment=Opens the Syncthing configuration web page.
 ShortcutNameStartSyncthing=Start Syncthing
-ShortcutNameStartSyncthingComment=Starts Syncthing as the current user.
+ShortcutNameStartSyncthingComment=Starts Syncthing.
 ShortcutNameStopSyncthing=Stop Syncthing
 ShortcutNameStopSyncthingComment=Stops Syncthing.
 ; [Tasks]
@@ -64,7 +64,6 @@ PrepareToInstallErrorMessage0=Setup was unable to uninstall the version currentl
 PrepareToInstallErrorMessage1=Setup has detected that the installed version (%1) is newer than this version (%2). To perform a downgrade, first uninstall the installed version, and then install this version.
 ; Misc.
 RunCommandMessage=Run command: "%1" %2
-IsRunningWMIQuery=WMI query: %1
-IsRunningWMIQueryResult=WMI query result: %1
-IsRunningWMIPauseMessage=Process not detected; pausing for %1 milliseconds
-IsRunningWMIExceptionMessage=IsSyncthingRunning function encountered an exception.
+ProcessCheckSucceededRunning=FindProcess function in ProcessCheck.dll succeeded; "%1" is running
+ProcessCheckSucceededNotRunning=FindProcess function in ProcessCheck.dll succeeded; "%1" is not running
+ProcessCheckFailed=FindProcess function in ProcessCheck.dll failed

@@ -2,7 +2,7 @@
 // Written by Bill Stewart (bstewart AT iname.com) for Syncthing
 
 // Notes:
-// * Adds a scheduled task to run StartSyncthing.js at logon
+// * Adds a scheduled task to start Syncthing at logon
 // * Removes the scheduled task
 // * Tests whether the scheduled task exists
 
@@ -167,8 +167,8 @@ function main() {
   var taskName = MSG_TASK_NAME + " (" + getUserId() + ")";
   if ( Args.Named.Exists("create") ) {
     if ( (Args.Named.Exists("silent")) || query(MSG_QUERY_CREATE) ) {
-      var programName = FSO.BuildPath(FSO.GetSpecialFolder(SystemFolder),"wscript.exe");
-      var programArgs = '"' + FSO.BuildPath(ScriptPath,"StartSyncthing.js") + '"';
+      var programName = FSO.BuildPath(ScriptPath,"stctl.exe");
+      var programArgs = '--start';
       result = createOrUpdateLogonTask(taskName,programName,programArgs);
     }
   }

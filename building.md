@@ -15,17 +15,18 @@ The following table lists all of the files associated with Syncthing Windows Set
 | Folder or File                              | Description
 | --------------                              | -----------
 | `bin`                                       | Folder contains 32-bit and 64-bit Syncthing binaries
+| `asmt`                                      | Folder contains 32-bit and 64-bit [asmt](https://github.com/Bill-Stewart/asmt) binaries
 | `shawl`                                     | Folder contains 32-bit and 64-bit [shawl](https://github.com/mtkennerly/shawl) binaries
-| `startps`                                   | Folder contains 32-bit and 64-bit `startps.exe` binaries
+| `ServMan`                                   | Folder contains 32-bit and 64-bit [ServMan](https://github.com/Bill-Stewart/ServMan) binaries
+| `stctl`                                     | Folder contains 32-bit and 64-bit [stctl](https://github.com/Bill-Stewart/stctl) binaries
 | `redist`                                    | Folder contains other files from the Syncthing download archive
 | `building.md`                               | This file
 | `LICENSE`                                   | License agreement
 | `Get-Download.ps1`                          | Downloads latest zip files from https://syncthing.net/downloads/
 | `Expand-Download.ps1`                       | PowerShell script that extracts the Syncthing Windows download zip files to the correct paths for building Setup
-| `Install-SyncthingService.ps1`              | PowerShell script that installs the service's local user account and the Windows service
-| `Reset-SyncthingServiceAccountPassword.ps1` | PowerShell script that restarts the service's local user account password
 | _lang_`-`_scriptname_`.js`                  | Setup installs one or more of these WSH scripts on the user's system
 | `License-`_lang_`.rtf`                      | License file displayed during installation
+| `ProcessCheck.dll`                          | 32-bit [ProcessCheck](https://github.com/Bill-Stewart/ProcessCheck) DLL used by Setup
 | `README.md`                                 | Setup documentation
 | `Syncthing.iss`                             | Inno Setup reads this file and builds Setup
 | `Localization.ini`                          | Facilitates localization of the script files (see [Localization](#localization))
@@ -99,8 +100,6 @@ For example, the following steps describe how to add localization for Dutch (lan
 
         [nl]
         ScriptNameSetSyncthingConfig=nl-SetSyncthingConfig.js
-        ScriptNameStartSyncthing=nl-StartSyncthing.js
-        ScriptNameStopSyncthing=nl-StopSyncthing.js
         ScriptNameSyncthingFirewallRule=nl-SyncthingFirewallRule.js
         ScriptNameSyncthingLogonTask=nl-SyncthingLogonTask.js
 

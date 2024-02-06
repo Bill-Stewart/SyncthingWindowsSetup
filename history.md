@@ -2,6 +2,16 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.27.3 (2024-02-06)
+
+* PowerShell scripts and `startps.exe` have been replaced with **[asmt](https://github.com/Bill-Stewart/asmt)**. Hopefully this will reduce anti-malware software false positives.
+
+* Start and stop scripts for per-user installations have been replaced with **[stctl](https://github.com/Bill-Stewart/stctl)**. Hopefully this will reduce anti-malware software false positives.
+
+* Setup now uses [ProcessCheck.dll](https://github.com/Bill-Stewart/ProcessCheck) to find running processes rather than a WMI query. Hopefully this will reduce anti-malware software false positives.
+
+* Minor tweaks.
+
 ## 1.27.2 (2024-01-02)
 
 * Syncthing 1.27.1 and later is built using Go >= version 1.21.5, which no longer supports Windows versions older than Windows 10/Server 2016. Accordingly, Setup requires at least Windows 10/Server 2016 or later to install Syncthing. (See https://github.com/golang/go/issues/64622 and https://forum.syncthing.net/t/21248 for further information.)

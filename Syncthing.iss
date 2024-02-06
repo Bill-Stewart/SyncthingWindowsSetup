@@ -10,7 +10,7 @@
 #error This script requires Inno Setup 6 or later
 #endif
 
-#define UninstallIfVersionOlderThan "1.27.0"
+#define UninstallIfVersionOlderThan "1.27.3"
 #define AppID "{1EEA2B6F-FD76-47D7-B74C-03E14CF043F9}"
 #define AppName "Syncthing"
 #define AppVersion GetStringFileInfo("bin\amd64\syncthing.exe",PRODUCT_VERSION)
@@ -26,8 +26,6 @@
 #define DefaultServiceAccountUserName "SyncthingServiceAcct"
 #define ConfigurationPageName "ConfigurationPage"
 #define ScriptNameSetSyncthingConfig "SetSyncthingConfig.js"
-#define ScriptNameStartSyncthing "StartSyncthing.js"
-#define ScriptNameStopSyncthing "StopSyncthing.js"
 #define ScriptNameSyncthingFirewallRule "SyncthingFirewallRule.js"
 #define ScriptNameSyncthingLogonTask "SyncthingLogonTask.js"
 
@@ -41,8 +39,8 @@ AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
 MinVersion=10
 ArchitecturesInstallIn64BitMode=x64 arm64
-CloseApplications=yes
-CloseApplicationsFilter=*.exe,*.pdf
+CloseApplications=no
+CloseApplicationsFilter=*.exe
 RestartApplications=yes
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
@@ -77,6 +75,8 @@ Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; InfoBeforeFile
 [Files]
 ; Support automatic uninstall of older versions
 Source: "UninsIS.dll"; Flags: dontcopy
+; Process checking
+Source: "ProcessCheck.dll"; Flags: dontcopy
 ; WSH scripts (use preprocessor to support multiple languages)
 #define protected i 0
 #sub LocalizeWSHScripts
@@ -84,32 +84,27 @@ Source: "UninsIS.dll"; Flags: dontcopy
 #define protected ScriptNameSetConfig    ReadIni(LocalizationFile, Language, "ScriptNameSetSyncthingConfig")
 #define protected ScriptNameFirewallRule ReadIni(LocalizationFile, Language, "ScriptNameSyncthingFirewallRule")
 #define protected ScriptNameLogonTask    ReadIni(LocalizationFile, Language, "ScriptNameSyncthingLogonTask")
-#define protected ScriptNameStart        ReadIni(LocalizationFile, Language, "ScriptNameStartSyncthing")
-#define protected ScriptNameStop         ReadIni(LocalizationFile, Language, "ScriptNameStopSyncthing")
 Source: "{#ScriptNameFirewallRule}"; DestDir: "{app}"; DestName: "{#ScriptNameSyncthingFirewallRule}"; Languages: {#Language}
 Source: "{#ScriptNameSetConfig}";    DestDir: "{app}"; DestName: "{#ScriptNameSetSyncthingConfig}";    Languages: {#Language}
 Source: "{#ScriptNameLogonTask}";    DestDir: "{app}"; DestName: "{#ScriptNameSyncthingLogonTask}";    Languages: {#language}; Check: not IsAdminInstallMode()
-Source: "{#ScriptNameStart}";        DestDir: "{app}"; DestName: "{#ScriptNameStartSyncthing}";        Languages: {#language}; Check: not IsAdminInstallMode()
-Source: "{#ScriptNameStop}";         DestDir: "{app}"; DestName: "{#ScriptNameStopSyncthing}";         Languages: {#language}; Check: not IsAdminInstallMode()
 #endsub
 #for { i = 0; i < NumLanguages; i++ } LocalizeWSHScripts
 ; General files
 Source: "redist\*"; DestDir: "{app}"; Flags: createallsubdirs recursesubdirs
-; PowerShell scripts
-Source: "Install-SyncthingService.ps1";              DestDir: "{app}"; Check: IsAdminInstallMode()
-Source: "Reset-SyncthingServiceAccountPassword.ps1"; DestDir: "{app}"; Check: IsAdminInstallMode()
 ; shawl license
 Source: "shawl-license.txt"; DestDir: "{app}"; Check: IsAdminInstallMode()
 ; 386 binaries
 Source: "bin\386\syncthing.exe";   DestDir: "{app}"; Check: not Is64BitInstallMode()
-Source: "ServMan\386\ServMan.exe"; DestDir: "{app}"; Check: not Is64BitInstallMode()
+Source: "stctl\386\stctl.exe";     DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and (not IsAdminInstallMode())
+Source: "asmt\386\asmt.exe";       DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
+Source: "ServMan\386\ServMan.exe"; DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
 Source: "shawl\386\shawl.exe";     DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
-Source: "startps\386\startps.exe"; DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
 ; amd64 binaries
 Source: "bin\amd64\syncthing.exe";   DestDir: "{app}"; Flags: solidbreak; Check: Is64BitInstallMode() and IsX64()
+Source: "stctl\amd64\stctl.exe";     DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and (not IsAdminInstallMode())
+Source: "asmt\amd64\asmt.exe";       DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
 Source: "ServMan\amd64\ServMan.exe"; DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
 Source: "shawl\amd64\shawl.exe";     DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
-Source: "startps\amd64\startps.exe"; DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
 ; arm64 binaries
 Source: "bin\arm64\syncthing.exe"; DestDir: "{app}"; Flags: solidbreak; Check: Is64BitInstallMode() and IsARM64()
 
@@ -128,16 +123,14 @@ Name: "{group}\{cm:ShortcutNameConfigurationPage}"; \
   IconFilename: "{app}\syncthing.exe"
 ; Non-admin: Start and stop shortcuts
 Name: "{group}\{cm:ShortcutNameStartSyncthing}"; \
-  Filename: "{sys}\wscript.exe"; \
-  Parameters: """{app}\{#ScriptNameStartSyncthing}"""; \
+  Filename: "{app}\stctl.exe"; \
+  Parameters: "--start"; \
   Comment: "{cm:ShortcutNameStartSyncthingComment}"; \
-  IconFilename: "{app}\syncthing.exe"; \
   Check: not IsAdminInstallMode()
 Name: "{group}\{cm:ShortcutNameStopSyncthing}"; \
-  Filename: "{sys}\wscript.exe"; \
-  Parameters: """{app}\{#ScriptNameStopSyncthing}"""; \
+  Filename: "{app}\stctl.exe"; \
+  Parameters: "--stop"; \
   Comment: "{cm:ShortcutNameStopSyncthingComment}"; \
-  IconFilename: "{app}\syncthing.exe"; \
   Check: not IsAdminInstallMode()
 
 [INI]
@@ -192,13 +185,6 @@ Filename: "{sys}\cscript.exe"; \
   Flags: runhidden; \
   StatusMsg: "{cm:RunStatusMsg}"; \
   Tasks: startatlogon
-; 'startafterinstall' task
-Filename: "{sys}\cscript.exe"; \
-  Parameters: """{app}\{#ScriptNameStartSyncthing}"" /silent"; \
-  Flags: runhidden; \
-  StatusMsg: "{cm:RunStatusMsg}"; \
-  Check: (not IsAdminInstallMode()) and FirewallRuleExists(); \
-  Tasks: startafterinstall
 ; postinstall
 Filename: "{app}\{#ConfigurationPageName}.url"; \
   Description: "{cm:RunPostInstallOpenConfigPage}"; \
@@ -249,6 +235,10 @@ function DLLIsISPackageInstalled(AppId: string; Is64BitInstallMode, IsAdminInsta
 function DLLUninstallISPackage(AppId: string; Is64BitInstallMode, IsAdminInstallMode: DWORD): DWORD;
   external 'UninstallISPackage@files:UninsIS.dll stdcall setuponly';
 
+// ProcessCheck.dll functions
+function DLLFindProcess(PathName: string; var Found: DWORD): DWORD;
+  external 'FindProcess@files:ProcessCheck.dll stdcall';
+
 function GetFullUserName(): string;
 var
   NumChars: DWORD;
@@ -272,48 +262,28 @@ begin
   end;
 end;
 
-function BoolToStr(const B: Boolean): string;
-begin
-  if B then
-    result := 'true'
-  else
-    result := 'false';
-end;
-
-// Checks if Syncthing process is running
 function IsSyncthingRunning(): Boolean;
 var
-  MilliSecs, Count: Integer;
-  AppDir, WQLQuery: string;
-  SWbemLocator, WMIService, SWbemObjectSet: Variant;
+  PathName: string;
+  Found: DWORD;
 begin
-  MilliSecs := 1000;
+  Sleep(500);
   result := false;
-  AppDir := AddBackslash(ExpandConstant('{app}'));
-  StringChangeEx(AppDir, '\', '\\', true);
-  WQLQuery := Format('SELECT Name FROM Win32_Process' +
-    ' WHERE (ExecutablePath LIKE "%s%%") AND (Name = "syncthing.exe")', [AppDir]);
-  Log(FmtMessage(CustomMessage('IsRunningWMIQuery'), [WQLQuery]));
-  for Count := 0 to 9 do
+  PathName := ExpandConstant('{app}\syncthing.exe');
+  if DLLFindProcess(PathName, Found) = 0 then
   begin
-    try
-      SWbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
-      WMIService := SWbemLocator.ConnectServer('', 'root\CIMV2');
-      SWbemObjectSet := WMIService.ExecQuery(WQLQuery);
-      result := (not VarIsNull(SWbemObjectSet)) and (SWbemObjectSet.Count > 0);
-      Log(FmtMessage(CustomMessage('IsRunningWMIQueryResult'), [BoolToStr(result)]));
-    except
-      Log(CustomMessage('IsRunningWMIExceptionMessage'));
-      break;
-    end; //try
+    result := Found = 1;
     if result then
-      break;
-    Log(FmtMessage(CustomMessage('IsRunningWMIPauseMessage'), [IntToStr(MilliSecs)]));
-    Sleep(MilliSecs);
-  end;
+      Log(FmtMessage(CustomMessage('ProcessCheckSucceededRunning'), [PathName]))
+    else
+      Log(FmtMessage(CustomMessage('ProcessCheckSucceededNotRunning'), [PathName]));
+  end
+  else
+    Log(CustomMessage('ProcessCheckFailed'));
 end;
 
-// UninsIS.dll - Returns true if package is detected as installed, or false otherwise
+// UninsIS.dll - Returns true if package is detected as installed,
+// or false otherwise
 function IsISPackageInstalled(): Boolean;
 begin
   result := DLLIsISPackageInstalled('{#AppID}',  // AppId
@@ -662,30 +632,58 @@ function InstallOrResetService(): Integer;
 var
   FileName, Params: string;
 begin
-  FileName := ExpandConstant('{app}\startps.exe');
-  Params := ExpandConstant('-Dqnw -W Hidden "{app}\Install-SyncthingService.ps1" -- -Install'
-    + ' -ServiceAccountUserName "' + ServiceAccountUserName + '"'
-    + ' -ServiceAccountDescription "{cm:ServiceAccountDescription}"'
-    + ' -ServiceName "{#ServiceName}"'
-    + ' -ServiceDisplayName "{cm:ServiceDisplayName}"'
-    + ' -ServiceDescription "{cm:ServiceDescription}"'
-    + ' -ServiceStartupType ');
+  FileName := ExpandConstant('{app}\asmt.exe');
+  Params := ExpandConstant('--init'
+    + ' --account="' + ServiceAccountUserName + '"'
+    + ' --accountdescription="{cm:ServiceAccountDescription}"'
+    + ' --name="{#ServiceName}"'
+    + ' --displayname="{cm:ServiceDisplayName}"'
+    + ' --description="{cm:ServiceDescription}"'
+    + ' --commandline="""{app}\shawl.exe"" run --cwd ""{app}"" --no-log --priority below-normal --restart-if 3,4 --stop-timeout {#ServiceShutdownTimeout} --'
+    + ' ""{app}\syncthing.exe"" --home ""{autoappdata}\{#AppName}"" --no-browser --no-restart"'
+    + ' --starttype=');
   if WizardIsTaskSelected('startatboot') then
-    Params := Params + 'delayed-auto'
+    Params := Params + 'DelayedAuto'
   else
-    Params := Params + 'demand';
-  Params := Params + ' -ServiceShutdownTimeout {#ServiceShutdownTimeout}';
+    Params := Params + 'Demand';
   result := ExecEx(FileName, Params, true);
+end;
+
+function SetAppDataDirectoryPermissions(): Integer;
+var
+  TargetPath, FileName, Params: string;
+begin
+  // icacls to reset permissions
+  TargetPath := ExpandConstant('{autoappdata}\{#AppName}');
+  FileName := ExpandConstant('{sys}\icacls.exe');
+  Params := '"' + TargetPath + '" /reset /t';
+  ExecEx(FileName, Params, true);
+  // Grant only SYSTEM, Administrators, and service account
+  Params := '"' + TargetPath + '" /inheritance:r'
+    + ' /grant "*S-1-5-18:(OI)(CI)F"'      // S-1-5-18 = SYSTEM
+    + ' /grant "*S-1-5-32-544:(OI)(CI)F"'  // S-1-5-32-544 = Administrators
+    + ' /grant "' + ServiceAccountUserName + ':(OI)(CI)M"';
+  result := ExecEx(FileName, Params, true);
+  // attrib to set app data directory and files to "not content indexed"
+  // (strangely, "+i" means "not content indexed")
+  FileName := ExpandConstant('{sys}\attrib.exe');
+  Params := '+i "' + TargetPath + '"';
+  ExecEx(FileName, Params, true);
+  Params := '+i "' + TargetPath + '\*" /s /d';
+  ExecEx(FileName, Params, true);
 end;
 
 function SetAppDirectoryPermissions(): Integer;
 var
-  FileName, Params: string;
+  TargetPath, FileName, Params: string;
 begin
+  TargetPath := ExpandConstant('{app}');
+  // Reset permissions
   FileName := ExpandConstant('{sys}\icacls.exe');
-  Params := ExpandConstant('"{app}" /reset /t');
+  Params := '"' + TargetPath + '" /reset /t';
   ExecEx(FileName, Params, true);
-  Params := ExpandConstant('"{app}" /grant "' + ServiceAccountUserName + ':(OI)(CI)M"');
+  // Grant permissions to service account
+  Params := '"' + TargetPath + '" /grant "' + ServiceAccountUserName + ':(OI)(CI)M"';
   result := ExecEx(FileName, Params, true);
 end;
 
@@ -707,14 +705,14 @@ begin
   result := ExecEx(FileName, Params, true);
 end;
 
-function RemoveService(): Integer;
+function DisableServiceAccountAndRemoveService(): Integer;
 var
   FileName, Params: string;
 begin
-  FileName := ExpandConstant('{app}\startps.exe');
-  Params := ExpandConstant('-Dqnw -W Hidden "{app}\Install-SyncthingService.ps1" -- -Remove'
-    + ' -ServiceAccountUserName "' + ServiceAccountUserName + '"'
-    + ' -ServiceName "{#ServiceName}"');
+  FileName := ExpandConstant('{app}\asmt.exe');
+  Params := ExpandConstant('--remove'
+    + ' --name="{#ServiceName}"'
+    + ' --account="' + ServiceAccountUserName + '"');
   result := ExecEx(FileName, Params, true);
 end;
 
@@ -757,16 +755,15 @@ begin
       result := FmtMessage(CustomMessage('PrepareToInstallErrorMessage1'), [InstalledSetupVersion, '{#SetupVersion}']);
       exit;
     end;
-    if IsAdminInstallMode() then
+    if not IsAdminInstallMode() then
     begin
-      if ServiceExists() and ServiceRunning() then
-        StopService();
+      if IsSyncthingRunning() then
+        ExecEx(ExpandConstant('{app}\stctl.exe'), '--stop -q', true);
     end
     else
     begin
-      ExecEx(ExpandConstant('{sys}\cscript.exe'),
-        ExpandConstant('"{app}\{#ScriptNameStopSyncthing}" /silent'),
-        true);
+      if ServiceExists() and ServiceRunning() then
+        StopService();
     end;
   end;
 end;
@@ -779,9 +776,14 @@ begin
     begin
       InstallOrResetService();
       SetAppDirectoryPermissions();
+      SetAppDataDirectoryPermissions();
     end;
     SetupConfiguration();
-    if WizardIsTaskSelected('startserviceafterinstall') then
+    if WizardIsTaskSelected('startafterinstall') then
+    begin
+      ExecEx(ExpandConstant('{app}\stctl.exe'), '--start -q', true);
+    end
+    else if WizardIsTaskSelected('startserviceafterinstall') then
     begin
       if ServiceExists() and (not ServiceRunning()) then
         StartService();
@@ -795,18 +797,13 @@ begin
   begin
     if IsAdminInstallMode() then
     begin
-      if ServiceExists() then
-      begin
-        if ServiceRunning() then
-          StopService();
-        RemoveService();
-      end;
+      if ServiceRunning() then
+        StopService();
+      DisableServiceAccountAndRemoveService();
     end
     else
     begin
-      ExecEx(ExpandConstant('{sys}\cscript.exe'),
-        ExpandConstant('"{app}\{#ScriptNameStopSyncthing}" /silent'),
-        true);
+      ExecEx(ExpandConstant('{app}\stctl.exe'), '--stop -q', true);
       if not UninstallSilent() then
       begin
         if FirewallRuleExists() then
