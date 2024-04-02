@@ -14,6 +14,7 @@ Syncthing Windows Setup is a lightweight yet full-featured Windows installer for
 - [Version History](#version-history)
 - [Upgrading Administrative Installations](#upgrading-administrative-installations)
 - [Downgrading an Installation](#downgrading-an-installation)
+- [Changing Installation Type](#changing-installation-type)
 - [Setup Command Line Parameters](#setup-command-line-parameters)
 - [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)
   - [Non Administrative (Current User) Installation Mode](#non-administrative-current-user-installation-mode)
@@ -90,6 +91,16 @@ If you upgrade an administrative installation from version 1.19.1 or older, Setu
 ## Downgrading an Installation
 
 To downgrade an installation, first uninstall the current installed version, and then reinstall the older version. (Keep in mind that the Syncthing executable will automatically upgrade itself unless automatic upgrades are disabled.)
+
+## Changing Installation Type
+
+If you installed using administrative (all users) installation mode and want to use non administrative (per user) installation mode (or vice versa), you must do the following:
+
+1. Uninstall the current installed version
+
+2. Run Setup again and choose your preferred installation mode
+
+If you want to keep the same configuration, you will need to replace the files in the Syncthing configuration folder. The location of the Syncthing configuration folder depends on the installation mode; see [Finding the Syncthing Configuration Folder](#finding-the-syncthing-configuration-folder) for details.
 
 ## Setup Command Line Parameters
 
@@ -297,7 +308,7 @@ This section describes how to check if Syncthing is running.
 
 If you ran Setup in non administrative (current user) mode, do one of the following:
 
-1. Open the Windows **Task Manager** application.
+1. Open the Windows Task Manager application.
 
 2. Switch to the "details" view to see the list of running applications.
 
@@ -313,7 +324,7 @@ OR
 
    The output of this command will indicate whether Syncthing is currently running.
 
-> NOTE: No matter whether you use the **Task Manager** application or the **tasklist** command, is is normal for `syncthing.exe` to be listed more than once in the output.
+> NOTE: No matter whether you use the Task Manager application or the **tasklist** command, is is normal for `syncthing.exe` to be listed more than once in the output.
 
 ### Checking if Syncthing is Running as a Service
 

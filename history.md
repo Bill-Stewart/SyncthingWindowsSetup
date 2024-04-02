@@ -2,6 +2,10 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.27.5 (2024-04-02)
+
+* Updated [shawl](https://github.com/mtkennerly/shawl) utility to v1.5.0.
+
 ## 1.27.3 (2024-02-06)
 
 * PowerShell scripts and `startps.exe` have been replaced with **[asmt](https://github.com/Bill-Stewart/asmt)**. Hopefully this will reduce anti-malware software false positives.
@@ -28,7 +32,7 @@ Below are the release notes for Syncthing Windows Setup (herein after referred t
 
 * Updated check for Syncthing running state to wait for up to 10 seconds at post-install.
 
-* Updated shawl utility.
+* Updated [shawl](https://github.com/mtkennerly/shawl) utility.
 
 * Changed service start/stop to the [ServMan](https://github.com/Bill-Stewart/ServMan) utility.
 
