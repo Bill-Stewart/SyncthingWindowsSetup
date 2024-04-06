@@ -112,6 +112,7 @@ function createOrUpdateLogonTask(taskName,programName,programArgs) {
   execAction.Path = programName;
   execAction.Arguments = programArgs;
   taskDefinition.Principal.LogonType = TASK_LOGON_INTERACTIVE_TOKEN;
+  taskDefinition.Settings.DisallowStartIfOnBatteries = false;
   var trigger = taskDefinition.Triggers.Create(TASK_TRIGGER_LOGON);
   trigger.UserId = WshNetwork.UserDomain + "\\" + WshNetwork.UserName;
   try {
