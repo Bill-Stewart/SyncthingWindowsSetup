@@ -30,6 +30,7 @@ ShortcutNameStopSyncthingComment=Stops Syncthing.
 TasksStartAtBoot=Start Syncthing service &automatically when system boots
 TasksStartServiceAfterInstall=Start Syncthing service after &installation
 TasksStartAtLogon=Start Syncthing &automatically when logging on
+TasksStartAtLogon_ACPowerOnly=S&tart automatically only if the computer is running AC power
 TasksStartAfterInstall=Start Syncthing after &installation
 ; [Run]
 RunStatusMsg=Completing setup tasks...

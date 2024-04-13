@@ -162,7 +162,12 @@ Name: startserviceafterinstall; \
 ; Non-admin
 Name: startatlogon; \
   Description: "{cm:TasksStartAtLogon}"; \
-  Check: (not IsAdminInstallMode()) and (not LogonTaskExists())
+  Check: not IsAdminInstallMode(); \
+  Flags: checkablealone
+Name: startatlogon\acpoweronly; \
+  Description: "{cm:TasksStartAtLogon_ACPowerOnly}"; \
+  Check: not IsAdminInstallMode(); \
+  Flags: dontinheritcheck unchecked
 Name: startafterinstall; \
   Description: "{cm:TasksStartAfterInstall}"; \
   Check: not IsAdminInstallMode()
@@ -179,12 +184,6 @@ Filename: "{sys}\wscript.exe"; \
   Parameters: """{app}\{#ScriptNameSyncthingFirewallRule}"" /create"; \
   StatusMsg: "{cm:RunStatusMsg}"; \
   Check: (not IsAdminInstallMode()) and (not FirewallRuleExists()) and (not WizardSilent())
-; Non-admin: Create logon task if selected
-Filename: "{sys}\cscript.exe"; \
-  Parameters: """{app}\{#ScriptNameSyncthingLogonTask}"" /create /silent"; \
-  Flags: runhidden; \
-  StatusMsg: "{cm:RunStatusMsg}"; \
-  Tasks: startatlogon
 ; postinstall
 Filename: "{app}\{#ConfigurationPageName}.url"; \
   Description: "{cm:RunPostInstallOpenConfigPage}"; \
@@ -769,6 +768,8 @@ begin
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
+var
+  Params: string;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -777,6 +778,20 @@ begin
       InstallOrResetService();
       SetAppDirectoryPermissions();
       SetAppDataDirectoryPermissions();
+    end
+    else
+    begin
+      if WizardIsTaskSelected('startatlogon') then
+      begin
+        Params := '/create /silent';
+        if WizardIsTaskSelected('startatlogon\acpoweronly') then
+          Params := Params + ' /startonacpoweronly';
+      end
+      else
+      begin
+        Params := '/remove /silent';
+      end;
+      ExecEx(ExpandConstant('{sys}\cscript.exe'), ExpandConstant('"{app}\{#ScriptNameSyncthingLogonTask}" ') + Params, true);
     end;
     SetupConfiguration();
     if WizardIsTaskSelected('startafterinstall') then

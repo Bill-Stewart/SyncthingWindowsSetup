@@ -105,13 +105,14 @@ function taskExists(taskName) {
   return result;
 }
 
-function createOrUpdateLogonTask(taskName,programName,programArgs) {
+function createOrUpdateLogonTask(taskName,programName,programArgs,startOnACPowerOnly) {
   var result = 0;
   var taskDefinition = TaskService.NewTask(0);  // 0 parameter required
   var execAction = taskDefinition.Actions.Create(TASK_ACTION_EXEC);
   execAction.Path = programName;
   execAction.Arguments = programArgs;
   taskDefinition.Principal.LogonType = TASK_LOGON_INTERACTIVE_TOKEN;
+  taskDefinition.Settings.DisallowStartIfOnBatteries = startOnACPowerOnly;
   var trigger = taskDefinition.Triggers.Create(TASK_TRIGGER_LOGON);
   trigger.UserId = WshNetwork.UserDomain + "\\" + WshNetwork.UserName;
   try {
@@ -142,7 +143,7 @@ function removeTask(taskName) {
 }
 
 function help() {
-  WScript.Echo("Usage: " + WScript.ScriptName + " /create|/remove [/silent]");
+  WScript.Echo("Usage: " + WScript.ScriptName + " /create [/startonacpoweronly]|/remove [/silent]");
 }
 
 function reportStatus(errorCode) {
@@ -163,13 +164,15 @@ function getUserId() {
 
 function main() {
   var result = 0;
-  var validParams = Args.Named.Exists("create") || Args.Named.Exists("remove") || Args.Named.Exists("test");
+  var validParams = Args.Named.Exists("create") || Args.Named.Exists("remove") ||
+    Args.Named.Exists("test");
   var taskName = MSG_TASK_NAME + " (" + getUserId() + ")";
+  // Parse arguments
   if ( Args.Named.Exists("create") ) {
     if ( (Args.Named.Exists("silent")) || query(MSG_QUERY_CREATE) ) {
       var programName = FSO.BuildPath(ScriptPath,"stctl.exe");
       var programArgs = '--start';
-      result = createOrUpdateLogonTask(taskName,programName,programArgs);
+      result = createOrUpdateLogonTask(taskName,programName,programArgs,Args.Named.Exists("startonacpoweronly"));
     }
   }
   else if ( Args.Named.Exists("remove") ) {

@@ -233,14 +233,15 @@ Once the local service user account has "Modify" permissions for the folder, you
 
 The **Select Additional Tasks** wizard page in Setup specifies additional tasks that Setup should perform. Available tasks depend on whether Setup runs in non administrative (current user) or administrative (all users) installation mode.
 
-Task Description                                        | Name                       | Installation Mode
-----------------                                        | ----                       | -----------------
-Start Syncthing automatically when logging on           | `startatlogon`             | Current user
-Start Syncthing after installation                      | `startafterinstall`        | Current user
-Start Syncthing service automatically when system boots | `startatboot`              | All users
-Start Syncthing service after installation              | `startserviceafterinstall` | All users
+Task Description                                             | Name                       | Installation Mode
+----------------                                             | ----                       | -----------------
+Start Syncthing automatically when logging on                | `startatlogon`             | Current user
+Start automatically only if the computer is running AC power | `startatlogon\acpoweronly` | Current user
+Start Syncthing after installation                           | `startafterinstall`        | Current user
+Start Syncthing service automatically when system boots      | `startatboot`              | All users
+Start Syncthing service after installation                   | `startserviceafterinstall` | All users
 
-The `/tasks` and `/mergetasks` command line parameters (see [Setup Command Line Parameters](#setup-command-line-parameters)) specify which tasks are selected (by default, all tasks are selected).
+The `/tasks` and `/mergetasks` command line parameters (see [Setup Command Line Parameters](#setup-command-line-parameters)) specify which tasks are selected. By default, all tasks except for `startatlogon\acpoweronly` are selected by default.
 
 ## Start Menu Shortcuts
 
