@@ -35,6 +35,8 @@ TasksStartAfterInstall=Start Syncthing after &installation
 ; [Run]
 RunStatusMsg=Completing setup tasks...
 RunPostInstallOpenConfigPage=&Open Syncthing configuration page
+; Initialization
+InitializeSetupError0=Error: Installation for all users is not permitted on a domain controller. 
 ; Configuration pages
 ConfigPage0Caption=Select Configuration Settings
 ConfigPage0Description=How should Setup configure Syncthing?

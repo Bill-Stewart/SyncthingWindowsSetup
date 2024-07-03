@@ -6,11 +6,11 @@
 ; * See README.md for documentation
 ; * See building.md for build/localization info
 
-#if Ver < EncodeVer(6,0,0,0)
-#error This script requires Inno Setup 6 or later
+#if Ver < EncodeVer(6,3,1,0)
+#error This script requires Inno Setup 6.3.1 or later
 #endif
 
-#define UninstallIfVersionOlderThan "1.27.3"
+#define UninstallIfVersionOlderThan "1.27.9"
 #define AppID "{1EEA2B6F-FD76-47D7-B74C-03E14CF043F9}"
 #define AppName "Syncthing"
 #define AppVersion GetStringFileInfo("bin\amd64\syncthing.exe",PRODUCT_VERSION)
@@ -38,7 +38,7 @@ AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
 MinVersion=10
-ArchitecturesInstallIn64BitMode=x64 arm64
+ArchitecturesInstallIn64BitMode=x64compatible arm64
 CloseApplications=no
 CloseApplicationsFilter=*.exe
 RestartApplications=yes
@@ -93,20 +93,22 @@ Source: "{#ScriptNameLogonTask}";    DestDir: "{app}"; DestName: "{#ScriptNameSy
 Source: "redist\*"; DestDir: "{app}"; Flags: createallsubdirs recursesubdirs
 ; shawl license
 Source: "shawl-license.txt"; DestDir: "{app}"; Check: IsAdminInstallMode()
-; 386 binaries
-Source: "bin\386\syncthing.exe";   DestDir: "{app}"; Check: not Is64BitInstallMode()
-Source: "stctl\386\stctl.exe";     DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and (not IsAdminInstallMode())
-Source: "asmt\386\asmt.exe";       DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
-Source: "ServMan\386\ServMan.exe"; DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
-Source: "shawl\386\shawl.exe";     DestDir: "{app}"; Check: ((not Is64BitInstallMode()) or (Is64BitInstallMode() and IsARM64())) and IsAdminInstallMode()
-; amd64 binaries
-Source: "bin\amd64\syncthing.exe";   DestDir: "{app}"; Flags: solidbreak; Check: Is64BitInstallMode() and IsX64()
-Source: "stctl\amd64\stctl.exe";     DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and (not IsAdminInstallMode())
-Source: "asmt\amd64\asmt.exe";       DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
-Source: "ServMan\amd64\ServMan.exe"; DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
-Source: "shawl\amd64\shawl.exe";     DestDir: "{app}";                    Check: Is64BitInstallMode() and IsX64() and IsAdminInstallMode()
-; arm64 binaries
-Source: "bin\arm64\syncthing.exe"; DestDir: "{app}"; Flags: solidbreak; Check: Is64BitInstallMode() and IsARM64()
+; 386 - syncthing binary
+Source: "bin\386\syncthing.exe";   DestDir: "{app}"; Check: (not IsX64Compatible()) and (not IsArm64())
+; 386 - other binaries
+Source: "stctl\386\stctl.exe";     DestDir: "{app}"; Check: (not IsX64Compatible()) and (not IsAdminInstallMode())
+Source: "asmt\386\asmt.exe";       DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
+Source: "ServMan\386\ServMan.exe"; DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
+Source: "shawl\386\shawl.exe";     DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
+; amd64 - syncthing binary
+Source: "bin\amd64\syncthing.exe";   DestDir: "{app}"; Flags: solidbreak; Check: IsX64Compatible() and (not IsArm64())
+; amd64 - other binaries
+Source: "stctl\amd64\stctl.exe";     DestDir: "{app}"; Check: IsX64Compatible() and (not IsAdminInstallMode())
+Source: "asmt\amd64\asmt.exe";       DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
+Source: "ServMan\amd64\ServMan.exe"; DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
+Source: "shawl\amd64\shawl.exe";     DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
+; arm64 - syncthing binary
+Source: "bin\arm64\syncthing.exe"; DestDir: "{app}"; Flags: solidbreak; Check: IsArm64()
 
 [Dirs]
 Name: "{autoappdata}\{#AppName}"; Attribs: notcontentindexed; Check: IsAdminInstallMode()
@@ -325,7 +327,17 @@ begin
   result := not ParamStrExists('/noconfigpage');
 end;
 
+function IsDomainController(): Boolean;
+var
+  VersionInfo: TWindowsVersion;
+begin
+  GetWindowsVersionEx(VersionInfo);
+  result := VersionInfo.ProductType = VER_NT_DOMAIN_CONTROLLER;
+end;
+
 function InitializeSetup(): Boolean;
+var
+  Msg: string;
 begin
   result := true;
   // Custom command line parameters
@@ -341,6 +353,15 @@ begin
   begin
     ServiceAccountUserName := GetPreviousData('ServiceAccountUserName',
       Trim(ExpandConstant('{param:serviceaccountusername|{#DefaultServiceAccountUserName}}')));
+    result := (not IsDomainController()) or
+      (IsDomainController() and (ParamStrExists('/allowdcserviceinstall')));
+    if not result then
+    begin
+      Msg := CustomMessage('InitializeSetupError0');
+      Log(Msg);
+      if not WizardSilent() then
+        MsgBox(Msg, mbCriticalError, MB_OK);
+    end;
   end;
 end;
 

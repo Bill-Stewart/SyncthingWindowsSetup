@@ -2,6 +2,14 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.27.9 (2024-07-03)
+
+* Security enhancement: Prevent service installation on a domain controller.
+
+* Upgrade to Inno Setup 6.3.2.
+
+* Enhancement: Install x64 binaries on AMD64 if OS supports it.
+
 ## 1.27.6 (2024-04-12)
 
 * Fix: `startatlogon` task now appears when reinstalling and upgrading.
