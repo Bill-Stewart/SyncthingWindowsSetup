@@ -6,17 +6,23 @@
 ; * See README.md for documentation
 ; * See building.md for build/localization info
 
-#if Ver < EncodeVer(6,3,1,0)
-#error This script requires Inno Setup 6.3.1 or later
+#if Ver < EncodeVer(6,3,3,0)
+#error This script requires Inno Setup 6.3.3 or later
 #endif
 
-#define UninstallIfVersionOlderThan "1.27.9"
+#define UninstallIfSetupVersionOlderThan "1.27.11"
 #define AppID "{1EEA2B6F-FD76-47D7-B74C-03E14CF043F9}"
+#define GitHubUserName "syncthing"
+#define GitHubProjectName "syncthing"
+#define GitHubVersionTagURLPattern "https://api.github.com/repos/%s/%s/releases/latest"
+#define GitHubDownloadURLPattern "https://github.com/%s/%s/releases/download/%s/%s"
+#define ZipFileNamePattern "syncthing-windows-%s-%s.zip"
+#define UnzipPattern "*/syncthing.exe */AUTHORS.txt */README.txt */LICENSE.txt"
 #define AppName "Syncthing"
-#define AppVersion GetStringFileInfo("bin\amd64\syncthing.exe",PRODUCT_VERSION)
 #define AppPublisher "Syncthing Foundation"
 #define AppURL "https://syncthing.net/"
-#define SetupVersion AppVersion + ".0"
+#define IniFileName "SetupVersion.ini"
+#define SetupVersion ReadIni(AddBackslash(SourcePath) + IniFileName, "Setup", "Version")
 #define ServiceName "syncthing"
 #define ServiceShutdownTimeout "10000"
 #define DefaultAutoUpgradeInterval "12"
@@ -25,6 +31,7 @@
 #define DefaultRelaysEnabled "true"
 #define DefaultServiceAccountUserName "SyncthingServiceAcct"
 #define ConfigurationPageName "ConfigurationPage"
+#define LicenseFileName "License.rtf"
 #define ScriptNameSetSyncthingConfig "SetSyncthingConfig.js"
 #define ScriptNameSyncthingFirewallRule "SyncthingFirewallRule.js"
 #define ScriptNameSyncthingLogonTask "SyncthingLogonTask.js"
@@ -38,7 +45,7 @@ AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
 MinVersion=10
-ArchitecturesInstallIn64BitMode=x64compatible arm64
+ArchitecturesInstallIn64BitMode=x64compatible
 CloseApplications=no
 CloseApplicationsFilter=*.exe
 RestartApplications=yes
@@ -49,66 +56,75 @@ AllowNoIcons=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=.
-OutputBaseFilename=syncthing-{#AppVersion}-setup
+OutputBaseFilename=syncthing-windows-setup
 Compression=lzma2/max
 SolidCompression=yes
 UsePreviousTasks=yes
 WizardStyle=modern
 WizardSizePercent=120
 UninstallFilesDir={app}\uninstall
-UninstallDisplayIcon={app}\syncthing.exe,0
-UninstallDisplayName={#AppName} {code:GetInstallationMode}
+UninstallDisplayIcon={app}\syncthing.ico
+UninstallDisplayName={code:GetUninstallDisplayName}
 VersionInfoProductName={#AppName}
 VersionInfoCompany={#AppPublisher}
-VersionInfoProductVersion={#AppVersion}
-VersionInfoVersion={#SetupVersion}
+
+[Messages]
+SetupWindowTitle=Syncthing Windows Setup [{#SetupVersion}]
 
 [Languages]
-Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; InfoBeforeFile: "License-en.rtf"
+Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; InfoBeforeFile: "en-README.rtf"
 
 ; See building.md file for localization details
-#define protected LocalizationFile AddBackslash(SourcePath) + "Localization.ini"
-#define protected NumLanguages 1
-#dim    protected Languages[NumLanguages]
-#define protected Languages[0] "en"
+#define protected
+#define LocalizationFile AddBackslash(SourcePath) + "Localization.ini"
+#define NumLanguages 1
+#dim    Languages[NumLanguages]
+#define Languages[0] "en"
 
 [Files]
+; Preprocessor localization
+#define i 0
+#sub LocalizeFiles
+#define Language Languages[i]
+#define FileNameLicense        ReadIni(LocalizationFile, Language, "LicenseFile")
+#define ScriptNameSetConfig    ReadIni(LocalizationFile, Language, "ScriptNameSetSyncthingConfig")
+#define ScriptNameFirewallRule ReadIni(LocalizationFile, Language, "ScriptNameSyncthingFirewallRule")
+#define ScriptNameLogonTask    ReadIni(LocalizationFile, Language, "ScriptNameSyncthingLogonTask")
+Source: "{#FileNameLicense}"; DestName: "{#LicenseFileName}"; flags: dontcopy
+Source: "{#ScriptNameFirewallRule}"; DestDir: "{app}"; DestName: "{#ScriptNameSyncthingFirewallRule}"; Languages: "{#Language}"
+Source: "{#ScriptNameSetConfig}"; DestDir: "{app}"; DestName: "{#ScriptNameSetSyncthingConfig}"; Languages: "{#Language}"
+Source: "{#ScriptNameLogonTask}"; DestDir: "{app}"; DestName: "{#ScriptNameSyncthingLogonTask}"; Languages: "{#language}"; Check: not IsAdminInstallMode()
+#endsub
+#for { i = 0; i < NumLanguages; i++ } LocalizeFiles
+
+; Installer-only
 ; Support automatic uninstall of older versions
 Source: "UninsIS.dll"; Flags: dontcopy
 ; Process checking
 Source: "ProcessCheck.dll"; Flags: dontcopy
-; WSH scripts (use preprocessor to support multiple languages)
-#define protected i 0
-#sub LocalizeWSHScripts
-#define protected Language Languages[i]
-#define protected ScriptNameSetConfig    ReadIni(LocalizationFile, Language, "ScriptNameSetSyncthingConfig")
-#define protected ScriptNameFirewallRule ReadIni(LocalizationFile, Language, "ScriptNameSyncthingFirewallRule")
-#define protected ScriptNameLogonTask    ReadIni(LocalizationFile, Language, "ScriptNameSyncthingLogonTask")
-Source: "{#ScriptNameFirewallRule}"; DestDir: "{app}"; DestName: "{#ScriptNameSyncthingFirewallRule}"; Languages: {#Language}
-Source: "{#ScriptNameSetConfig}";    DestDir: "{app}"; DestName: "{#ScriptNameSetSyncthingConfig}";    Languages: {#Language}
-Source: "{#ScriptNameLogonTask}";    DestDir: "{app}"; DestName: "{#ScriptNameSyncthingLogonTask}";    Languages: {#language}; Check: not IsAdminInstallMode()
-#endsub
-#for { i = 0; i < NumLanguages; i++ } LocalizeWSHScripts
-; General files
-Source: "redist\*"; DestDir: "{app}"; Flags: createallsubdirs recursesubdirs
+; Command-line JSON parser (get latest version tag from GitHub)
+Source: "jq.exe"; Flags: dontcopy
+; unzip utility for extracting Syncthing after downloading
+Source: "unzip.exe"; Flags: dontcopy
+
+; Setup version INI file
+Source: "{#IniFileName}"; DestDir: "{app}"
+
 ; shawl license
 Source: "shawl-license.txt"; DestDir: "{app}"; Check: IsAdminInstallMode()
-; 386 - syncthing binary
-Source: "bin\386\syncthing.exe";   DestDir: "{app}"; Check: (not IsX64Compatible()) and (not IsArm64())
-; 386 - other binaries
-Source: "stctl\386\stctl.exe";     DestDir: "{app}"; Check: (not IsX64Compatible()) and (not IsAdminInstallMode())
-Source: "asmt\386\asmt.exe";       DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
-Source: "ServMan\386\ServMan.exe"; DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
-Source: "shawl\386\shawl.exe";     DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
-; amd64 - syncthing binary
-Source: "bin\amd64\syncthing.exe";   DestDir: "{app}"; Flags: solidbreak; Check: IsX64Compatible() and (not IsArm64())
-; amd64 - other binaries
-Source: "stctl\amd64\stctl.exe";     DestDir: "{app}"; Check: IsX64Compatible() and (not IsAdminInstallMode())
-Source: "asmt\amd64\asmt.exe";       DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
-Source: "ServMan\amd64\ServMan.exe"; DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
-Source: "shawl\amd64\shawl.exe";     DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
-; arm64 - syncthing binary
-Source: "bin\arm64\syncthing.exe"; DestDir: "{app}"; Flags: solidbreak; Check: IsArm64()
+
+; Icon
+Source: "syncthing.ico"; DestDir: "{app}"
+; x86compatible binaries
+Source: "binaries\i386\asmt.exe";    DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
+Source: "binaries\i386\ServMan.exe"; DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
+Source: "binaries\i386\shawl.exe";   DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
+Source: "binaries\i386\stctl.exe";   DestDir: "{app}"; Check: (not IsX64Compatible()) and (not IsAdminInstallMode())
+; x64compatible binaries
+Source: "binaries\x86_64\asmt.exe";    DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode(); Flags: solidbreak
+Source: "binaries\x86_64\ServMan.exe"; DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
+Source: "binaries\x86_64\shawl.exe";   DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
+Source: "binaries\x86_64\stctl.exe";   DestDir: "{app}"; Check: IsX64Compatible() and (not IsAdminInstallMode())
 
 [Dirs]
 Name: "{autoappdata}\{#AppName}"; Attribs: notcontentindexed; Check: IsAdminInstallMode()
@@ -118,12 +134,17 @@ Name: "{autoappdata}\{#AppName}"; Attribs: notcontentindexed; Check: IsAdminInst
 ; * Use wscript.exe for interactive scripts
 
 [Icons]
-; Both admin and non-admin
+; Non-admin and admin icons
 Name: "{group}\{cm:ShortcutNameConfigurationPage}"; \
   Filename: "{app}\{#ConfigurationPageName}.url"; \
   Comment: "{cm:ShortcutNameConfigurationPageComment}"; \
-  IconFilename: "{app}\syncthing.exe"
-; Non-admin: Start and stop shortcuts
+  IconFilename: "{app}\syncthing.ico"
+Name: "{autodesktop}\{cm:ShortcutNameConfigurationPage}"; \
+  Filename: "{app}\{#ConfigurationPageName}.url"; \
+  Comment: "{cm:ShortcutNameConfigurationPageComment}"; \
+  IconFilename: "{app}\syncthing.ico"; \
+  Tasks: desktopicon
+; Non-admin icons
 Name: "{group}\{cm:ShortcutNameStartSyncthing}"; \
   Filename: "{app}\stctl.exe"; \
   Parameters: "--start"; \
@@ -136,10 +157,6 @@ Name: "{group}\{cm:ShortcutNameStopSyncthing}"; \
   Check: not IsAdminInstallMode()
 
 [INI]
-Filename: "{app}\SetupVersion.ini"; \
-  Section: "Setup"; \
-  Key: "Version"; \
-  String: "{#SetupVersion}"
 Filename: "{app}\{#ConfigurationPageName}.url"; \
   Section: "InternetShortcut"; \
   Key: "URL"; \
@@ -147,7 +164,7 @@ Filename: "{app}\{#ConfigurationPageName}.url"; \
 Filename: "{app}\{#ConfigurationPageName}.url"; \
   Section: "InternetShortcut"; \
   Key: "IconFile"; \
-  String: "{app}\syncthing.exe"
+  String: "{app}\syncthing.ico"
 Filename: "{app}\{#ConfigurationPageName}.url"; \
   Section: "InternetShortcut"; \
   Key: "IconIndex"; \
@@ -173,6 +190,9 @@ Name: startatlogon\acpoweronly; \
 Name: startafterinstall; \
   Description: "{cm:TasksStartAfterInstall}"; \
   Check: not IsAdminInstallMode()
+Name: desktopicon; \
+  Description: "{cm:TasksCreateDesktopIcon}"; \
+  Flags: unchecked
 
 [Run]
 ; Admin: Add firewall rule silently
@@ -207,11 +227,28 @@ Filename: "{sys}\cscript.exe"; \
   Check: not IsAdminInstallMode()
 
 [UninstallDelete]
-Type: files; Name: "{app}\SetupVersion.ini"
 Type: files; Name: "{app}\{#ConfigurationPageName}.url"
 Type: files; Name: "{app}\syncthing.exe.old"
+Type: files; Name: "{app}\syncthing.exe"
+Type: files; Name: "{app}\AUTHORS.txt"
+Type: files; Name: "{app}\README.txt"
+Type: files; Name: "{app}\LICENSE.txt"
 
 [Code]
+
+// General notes about online vs. offline installation:
+// * LatestVersionTag gets set if we connected to github.com, downloaded latest
+//   version JSON file, and retrieved the latest version tag using jq.exe
+// * LatestVersionTag = '' if we couldn't get to github.com
+// * Therefore, LatestVersionTag = '' means offline install
+// * If offline (LatestVersionTag empty), ZipFilePath gets set by:
+//   a. /zipfilepath= command line parameter, or
+//   b. Wizard file selection page
+// * If user specifies /zipfilepath, don't attempt to get latest version JSON
+// * If online (LatestVersionTag not empty), ZipFilePath gets set in
+//   NextButtonClick event
+// * Install only proceeds if zip file tests ok (i.e., unzip -t returns 0)
+
 const
   ERROR_MORE_DATA               = 234;
   ERROR_SERVICE_ALREADY_RUNNING = 1056;
@@ -219,10 +256,13 @@ const
 
 // Global variables
 var
+  OutputMsgMemoPage0: TOutputMsgMemoWizardPage;
   ConfigPage0: TInputQueryWizardPage;
+  FilePage0: TInputFileWizardPage;
+  DownloadPage0: TDownloadWizardPage;
   // Configuration page values
   AutoUpgradeInterval, ListenAddress, ListenPort, RelaysEnabled: string;
-  ServiceAccountUserName: string;
+  ExecOutputFirstLine, ServiceAccountUserName, ZipFilePath, LatestVersionTag: string;
 
 // Windows API functions
 function GetUserNameExW(NameFormat: Integer; lpNameBuffer: string; var nSize: DWORD): Boolean;
@@ -238,7 +278,7 @@ function DLLUninstallISPackage(AppId: string; Is64BitInstallMode, IsAdminInstall
 
 // ProcessCheck.dll functions
 function DLLFindProcess(PathName: string; var Found: DWORD): DWORD;
-  external 'FindProcess@files:ProcessCheck.dll stdcall';
+  external 'FindProcess@files:ProcessCheck.dll stdcall setuponly';
 
 function GetFullUserName(): string;
 var
@@ -335,11 +375,95 @@ begin
   result := VersionInfo.ProductType = VER_NT_DOMAIN_CONTROLLER;
 end;
 
+procedure OnExecAndLogOutput(const S: String; const Error, FirstLine: Boolean);
+begin
+  if (not Error) and (ExecOutputFirstLine = '') and (Trim(S) <> '') then
+    ExecOutputFirstLine := S;  // Store first line of non-empty output
+end;
+
+function ExecEx(const FileName, Params: string; const Hide: Boolean): Integer;
+var
+  ShowCmd: Integer;
+  OK: Boolean;
+begin
+  if Hide then
+    ShowCmd := SW_HIDE
+  else
+    ShowCmd := SW_SHOWNORMAL;
+  OK := ExecAndLogOutput(FileName,  // Filename
+    Params,                         // Params
+    '',                             // WorkingDir
+    ShowCmd,                        // ShowCmd
+    ewWaitUntilTerminated,          // TExecWait
+    result,                         // ResultCode
+    @OnExecAndLogOutput);           // TOnLog
+  Log(Format('ExecEx: "%s" %s', [FileName, Params]));
+  if OK then
+    Log(Format('ExecEx exit code: %s', [IntToStr(result)]))
+  else
+    Log(Format('ExecEx failed: %s (%s)', [SysErrorMessage(result), IntToStr(result)]));
+end;
+
+function TestZipFile(const ZipFilePath: string): Boolean;
+begin
+  result := ExecEx(ExpandConstant('{tmp}\unzip.exe'),
+    ExpandConstant(Format('-t "%s" {#UnzipPattern}', [ZipFilePath])), true) = 0;
+end;
+
+function OnDownloadProgress(const Url, Filename: string; const Progress, ProgressMax: Int64): Boolean;
+begin
+  result := true;
+  if Progress = ProgressMax then
+    Log(CustomMessage('DownloadFileSucceeded'));
+end;
+
+function DownloadFile(const URL, LocalFileName: string): Boolean;
+var
+  BytesDownloaded: Int64;
+begin
+  result := false;
+  try
+    BytesDownloaded := DownloadTemporaryFile(URL, LocalFileName, '', @OnDownloadProgress);
+    result := BytesDownloaded > 0;
+  except
+  end;
+end;
+
+function GetLatestVersionJsonFilePath(): string;
+var
+  URL, UniqueFilePath: string;
+begin
+  result := '';
+  URL := Format('{#GitHubVersionTagURLPattern}', ['{#GitHubUserName}', '{#GitHubProjectName}']);
+  UniqueFilePath := GenerateUniqueName(ExpandConstant('{tmp}'), '.json');
+  if DownloadFile(URL, ExtractFileName(UniqueFilePath)) then
+    result := UniqueFilePath;
+end;
+
+procedure GetLatestVersionTag();
+var
+  JsonFilePath: string;
+begin
+  if LatestVersionTag <> '' then
+    exit;
+  JsonFilePath := GetLatestVersionJsonFilePath();
+  if JsonFilePath = '' then
+    exit;
+  if ExecEx(ExpandConstant('{tmp}\jq.exe'), '-r .name "' + JsonFilePath + '"', true) = 0 then
+  begin
+    LatestVersionTag := ExecOutputFirstLine;
+    Log('Latest version tag: ' + LatestVersionTag);
+  end
+  else
+    Log('Failed to get latest version tag');
+end;
+
 function InitializeSetup(): Boolean;
 var
   Msg: string;
 begin
   result := true;
+  ExecOutputFirstLine := '';
   // Custom command line parameters
   AutoUpgradeInterval := GetPreviousData('AutoUpgradeInterval',
     Trim(ExpandConstant('{param:autoupgradeinterval|{#DefaultAutoUpgradeInterval}}')));
@@ -363,11 +487,50 @@ begin
         MsgBox(Msg, mbCriticalError, MB_OK);
     end;
   end;
+  ExtractTemporaryFile('unzip.exe');
+  ZipFilePath := Trim(ExpandConstant('{param:zipfilepath}'));
+  if ZipFilePath = '' then
+  begin
+    // Zip file path not specified on command line; try to get it dynamically
+    ExtractTemporaryFile('jq.exe');
+    GetLatestVersionTag();
+    if LatestVersionTag = '' then
+    begin
+      Msg := CustomMessage('InitializeSetupError1');
+      Log(Msg);
+    end;
+  end
+  else
+  begin
+    // Assume installer directory if no path specifed with zip file name
+    if Pos('\', ZipFilePath) = 0 then
+      ZipFilePath := ExpandConstant('{src}\') + ZipFilePath;
+  end;
 end;
 
 procedure InitializeWizard();
+var
+  LicenseFileText: AnsiString;
 begin
-  // Custom configuration page
+  // Custom memo page(s)
+  ExtractTemporaryFile('{#LicenseFileName}');
+  if LoadStringFromFile(ExpandConstant('{tmp}\{#LicenseFileName}'), LicenseFileText) then
+  begin
+    OutputMsgMemoPage0 := CreateOutputMsgMemoPage(wpInfoBefore,
+      CustomMessage('MemoPage0Caption'),
+      CustomMessage('MemoPage0Description'),
+      CustomMessage('MemoPage0SubCaption'),
+      LicenseFileText);
+  end;
+  // Custom file page(s)
+  FilePage0 := CreateInputFilePage(OutputMsgMemoPage0.ID,
+    CustomMessage('FilePage0Caption'),
+    CustomMessage('FilePage0Description'),
+    CustomMessage('FilePage0SubCaption'));
+  FilePage0.Add(CustomMessage('FilePage0Prompt'), CustomMessage('FilePage0Filter'), '.zip');
+  if ZipFilePath <> '' then
+    FilePage0.Values[0] := ZipFilePath;
+  // Custom configuration page(s)
   ConfigPage0 := CreateInputQueryPage(wpSelectProgramGroup,
     CustomMessage('ConfigPage0Caption'),
     CustomMessage('ConfigPage0Description'),
@@ -380,7 +543,10 @@ begin
   ConfigPage0.Values[1] := ListenAddress;
   ConfigPage0.Values[2] := ListenPort;
   ConfigPage0.Values[3] := RelaysEnabled;
-  WizardForm.LicenseAcceptedRadio.Checked := true;
+  // Custom download page(s)
+  DownloadPage0 := CreateDownloadPage(SetupMessage(msgWizardPreparing),
+    SetupMessage(msgPreparingDesc), @OnDownloadProgress);
+  DownloadPage0.ShowBaseNameInsteadOfUrl := true;
 end;
 
 function InitializeUninstall(): Boolean;
@@ -404,13 +570,81 @@ begin
   end;
 end;
 
+function GetDownloadFileName(): string;
+var
+  ProcArch: string;
+begin
+  result := '';
+  case ProcessorArchitecture of
+    paX86, paUnknown: ProcArch := '386';
+    paX64: ProcArch := 'amd64';
+    paArm64: ProcArch := 'arm64';
+  else
+    exit;
+  end;
+  result := Format('{#ZipfileNamePattern}', [ProcArch, LatestVersionTag]);
+end;
+
+function GetDownloadURL(const DownloadFileName: string): string;
+begin
+  result := '';
+  if LatestVersionTag = '' then
+    exit;
+  result := Format('{#GitHubDownloadURLPattern}', ['{#GitHubUserName}',
+    '{#GitHubProjectName}', LatestVersionTag, DownloadFileName]);
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  result := false;
+  if PageID = FilePage0.ID then
+  begin
+    // Skip zip file page if we were able to get latest version tag
+    result := LatestVersionTag <> '';
+  end;
+end;
+
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
   UpgradeInterval, Port: Integer;
-  Relays: string;
+  Relays, DownloadFileName, DownloadURL, Msg: string;
 begin
   result := true;
-  if CurPageID = ConfigPage0.ID then
+  if CurPageID = FilePage0.ID then
+  begin
+    result := Trim(FilePage0.Values[0]) <> '';
+    if not result then
+    begin
+      Log(CustomMessage('FilePage0Item0Empty'));
+      if not WizardSilent() then
+        MsgBox(CustomMessage('FilePage0Item0Empty'), mbError, MB_OK);
+      WizardForm.ActiveControl := FilePage0.Edits[0];
+      FilePage0.Values[0] := '';
+      exit;
+    end;
+    result := FileExists(FilePage0.Values[0]);
+    if not result then
+    begin
+      Log(CustomMessage('ZipFilePathNotFound'));
+      if not WizardSilent() then
+        MsgBox(CustomMessage('ZipFilePathNotFound'), mbError, MB_OK);
+      WizardForm.ActiveControl := FilePage0.Edits[0];
+      FilePage0.Edits[0].SelectAll();
+      exit;
+    end;
+    result := TestZipFile(FilePage0.Values[0]);
+    if not result then
+    begin
+      Log(CustomMessage('ZipFileNotValid'));
+      if not WizardSilent() then
+        MsgBox(CustomMessage('ZipFileNotValid'), mbError, MB_OK);
+      FilePage0.Edits[0].SelectAll();
+      exit;
+    end;
+    // Update global based on page
+    ZipFilePath := Trim(FilePage0.Values[0]);
+  end
+  else if CurPageID = ConfigPage0.ID then
   begin
     //-------------------------------------------------------------------------
     // 0 - Validate auto upgrade interval (>= 0 and <= 65535)
@@ -475,6 +709,48 @@ begin
     end;
     // Update global based on page
     RelaysEnabled := Relays;
+  end
+  else if CurPageID = wpReady then
+  begin
+    // No need to download if we already have zip file path
+    if ZipFilePath <> '' then
+      exit;
+    DownloadFileName := GetDownloadFileName();
+    DownloadURL := GetDownloadURL(DownloadFileName);
+    DownloadPage0.Clear();
+    DownloadPage0.Add(DownloadURL, DownloadFileName, '');
+    DownloadPage0.Show();
+    try
+      try
+        DownloadPage0.Download();
+      except
+        result := false;
+        if DownloadPage0.AbortedByUser then
+          Msg := CustomMessage('DownloadPageAbortedByUser')
+        else
+          Msg := AddPeriod(GetExceptionMessage);
+        if not WizardSilent() then
+          Msgbox(Msg, mbCriticalError, MB_OK)
+        else
+          Log(Msg);
+      end;
+    finally
+      DownloadPage0.Hide();
+    end;
+    if result then
+    begin
+      ZipFilePath := ExpandConstant(Format('{tmp}\%s', [DownloadFileName]));
+      result := TestZipFile(ZipFilePath);
+      if not result then
+      begin
+        ZipFilePath := '';
+        Msg := CustomMessage('ZipFileNotValid');
+        Log(Msg);
+        if not WizardSilent() then
+          MsgBox(Msg, mbCriticalError, MB_OK);
+        exit;
+      end;
+    end;
   end;
 end;
 
@@ -484,10 +760,20 @@ var
   Info: string;
 begin
   Info := '';
+  if LatestVersionTag = '' then
+  begin
+    Info := Info + CustomMessage('ReadyMemoZipFileInfo') + NewLine + Space;
+    Info := Info + ZipFilePath;
+  end;
   // Show installation mode
   if Info <> '' then
     Info := Info + NewLine + NewLine;
-  Info := Info + CustomMessage('ReadyMemoInstallInfo') + NewLine + Space;
+  Info := Info + CustomMessage('ReadyMemoInstallSettings') + NewLine + Space;
+  if LatestVersionTag <> '' then
+    Info := Info + FmtMessage(CustomMessage('ReadyMemoInstallOnline'), [LatestVersionTag])
+  else
+    Info := Info + CustomMessage('ReadyMemoInstallOffline');
+  Info := Info + NewLine + Space;
   if IsAdminInstallMode() then
     Info := Info + CustomMessage('ReadyMemoInstallAdmin') + NewLine + Space
       + FmtMessage(CustomMessage('ReadyMemoInstallAdminServiceAccountUserName'), [ServiceAccountUserName])
@@ -547,7 +833,7 @@ begin
   result := Info;
 end;
 
-// Requires string param
+// Param parameter is required
 function GetListenAddress(Param: string): string;
 begin
   if (Trim(ListenAddress) = '0.0.0.0') or (Trim(ListenAddress) = '::') then
@@ -556,41 +842,20 @@ begin
     result := ListenAddress;
 end;
 
-// Requires string param
+// Param parameter is required
 function GetListenPort(Param: string): string;
 begin
   result := ListenPort;
 end;
 
-// Requires string param
-function GetInstallationMode(Param: string): string;
+// Param parameter is required
+function GetUninstallDisplayName(Param: string): string;
 begin
-  if IsAdminInstallMode() then
-    result := '(admin)'
+  result := ExpandConstant('{#AppName} ');
+  if not IsAdminInstallMode() then
+    result := result + CustomMessage('UninstallDisplayNamePerUserSuffix')
   else
-    result := '(current user)';
-end;
-
-function ExecEx(const FileName, Params: string; const Hide: Boolean): Integer;
-var
-  ShowCmd: Integer;
-  OK: Boolean;
-begin
-  if Hide then
-    ShowCmd := SW_HIDE
-  else
-    ShowCmd := SW_SHOWNORMAL;
-  OK := Exec(FileName,        // Filename
-    Params,                   // Params
-    ExpandConstant('{app}'),  // WorkingDir
-    ShowCmd,                  // ShowCmd
-    ewWaitUntilTerminated,    // TExecWait
-    result);                  // ResultCode
-  Log(Format('Exec: "%s" %s', [FileName, Params]));
-  if OK then
-    Log('Exec exit code: ' + IntToStr(result))
-  else
-    Log('Exec failed: ' + SysErrorMessage(result) + ' (' + IntToStr(result) + ')');
+    result := result + CustomMessage('UninstallDisplayNameServiceSuffix');
 end;
 
 function ServiceExists(): Boolean;
@@ -755,15 +1020,18 @@ begin
   result := '';
   if IsISPackageInstalled() then
   begin
-    InstalledSetupVersion := GetIniString('Setup', 'Version', '', ExpandConstant('{app}\SetupVersion.ini'));
+    InstalledSetupVersion := GetIniString('Setup', 'Version', '', ExpandConstant('{app}\{#IniFileName}'));
     if (InstalledSetupVersion = '') or
-      (CompareVersionStrings(InstalledSetupVersion, '{#UninstallIfVersionOlderThan}') < 0) then
+      (CompareVersionStrings(InstalledSetupVersion, '{#UninstallIfSetupVersionOlderThan}') < 0) then
     begin
       // Uninstall if:
       // Package is installed AND
       //   Can't get setup version from SetupVersion.ini, OR
       //   Version in SetupVersion.ini is older than {#UninstallIfVersionOlderThan}
-      if UninstallISPackage() <> 0 then
+      Log(CustomMessage('PrepareToInstallUninstallNeeded'));
+      if UninstallISPackage() = 0 then
+        Log(CustomMessage('PrepareToInstallUninstallSucceeded'))
+      else
       begin
         result := CustomMessage('PrepareToInstallErrorMessage0');
         exit;
@@ -782,7 +1050,7 @@ begin
     end
     else
     begin
-      if ServiceExists() and ServiceRunning() then
+      if ServiceRunning() then
         StopService();
     end;
   end;
@@ -790,10 +1058,17 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  Params: string;
+  Version, Params, FileName: string;
 begin
   if CurStep = ssPostInstall then
   begin
+    ExecEx(ExpandConstant('{tmp}\unzip.exe'),
+      ExpandConstant(Format('-jn -d "{app}" "%s" {#UnzipPattern}', [ZipFilePath])), true);
+    if GetVersionNumbersString(ExpandConstant('{app}\syncthing.exe'), Version) then
+    begin
+      Log(FmtMessage(CustomMessage('InstalledVersion'), [Version]));
+      SetIniString('InstalledVersion', 'Version', Version, ExpandConstant('{app}\{#IniFileName}'));
+    end;
     if IsAdminInstallMode() then
     begin
       InstallOrResetService();
@@ -824,6 +1099,17 @@ begin
       if ServiceExists() and (not ServiceRunning()) then
         StartService();
     end;
+    if not WizardIsTaskSelected('desktopicon') then
+    begin
+      FileName := ExpandConstant('{autodesktop}\{cm:ShortcutNameConfigurationPage}.lnk');
+      if FileExists(FileName) then
+      begin
+        if DeleteFile(FileName) then
+          Log(FmtMessage(CustomMessage('FileDeleteSucceeded'), [FileName]))
+        else
+          Log(FmtMessage(CustomMessage('FileDeleteFailed'), [FileName]));
+      end;
+    end;
   end;
 end;
 
@@ -851,5 +1137,20 @@ begin
         end;
       end;
     end;
+  end;
+end;
+
+procedure DeinitializeUninstall();
+var
+  AppDir: string;
+begin
+  // Try to remove {app} at uninstall if it still exists
+  AppDir := ExpandConstant('{app}');
+  if DirExists(AppDir) then
+  begin
+    if RemoveDir(AppDir) then
+      Log(FmtMessage(CustomMessage('DeinitializeUninstallAppDirRemoveSucceeded'), [AppDir]))
+    else
+      Log(FmtMessage(CustomMessage('DeinitializeUninstallAppDirRemoveFailed'), [AppDir]));
   end;
 end;

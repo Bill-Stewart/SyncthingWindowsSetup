@@ -2,6 +2,22 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.27.11 (2024-09-03)
+
+* Setup now automatically downloads and installs the latest version of Syncthing from GitHub.
+
+* Setup now also supports offline installation mode where you can specify the Syncthing download zip file.
+
+* Setup's executable size now is much smaller due to the above.
+
+* Added `desktopicon` task (not selected by default).
+
+* Added informational wizard page and moved license to a separate wizard page.
+
+* Corrected some errors in the documentation.
+
+* Built Setup using Inno Setup 6.3.3.
+
 ## 1.27.9 (2024-07-03)
 
 * Security enhancement: Prevent service installation on a domain controller.

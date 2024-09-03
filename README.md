@@ -12,10 +12,11 @@ Syncthing Windows Setup is a lightweight yet full-featured Windows installer for
 - [Download](#download)
 - [Background](#background)
 - [Version History](#version-history)
-- [Upgrading Administrative Installations](#upgrading-administrative-installations)
+- [Upgrade Details](#upgrade-details)
 - [Downgrading an Installation](#downgrading-an-installation)
 - [Changing Installation Type](#changing-installation-type)
 - [Setup Command Line Parameters](#setup-command-line-parameters)
+- [Offline Installation](#offline-installation)
 - [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)
   - [Non Administrative (Current User) Installation Mode](#non-administrative-current-user-installation-mode)
   - [Administrative (All Users) Installation Mode](#administrative-all-users-installation-mode)
@@ -50,25 +51,27 @@ Syncthing Windows Setup is a lightweight yet full-featured Windows installer for
 
 ## System Requirements
 
-Syncthing is compiled using the Go programming language, which requires a recent operating system version. Accordingly, installing Syncthing using Syncthing Windows Setup requires Windows 10 or later.
+Syncthing Windows Setup has the same requirements as Syncthing itself: Windows 10 or Windows Server 2016 or later.
 
 ## Download
 
-You can download the latest version from the Github Releases page:
+You can download the latest version of Syncthing Windows Setup from the Github Releases page:
 
-https://github.com/Bill-Stewart/SyncthingWindowsSetup/releases/
+https://github.com/Bill-Stewart/SyncthingWindowsSetup/releases/latest/
 
 ## Background
 
 Syncthing Windows Setup (herein referred to as "Setup") provides a [Syncthing](https://syncthing.net/) installer for Windows, built using [Inno Setup](https://www.jrsoftware.org/isinfo.php). It provides the following features:
 
-* Installs the appropriate Windows platform (AMD64, etc.) version of Syncthing using a single installer
+* Downloads and installs the latest version of Syncthing from GitHub
+
+* Supports offline installation for Windows-based computers that can't connect to GitHub (see [Offline Installation](#offline-installation))
 
 * Supports non administrative (current user) and administrative (all users) installation (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode))
 
 * When installing for the current user, Setup creates a scheduled task that starts Syncthing at logon (if selected)
 
-* When installing for all users, installs Syncthing as a Windows service using [shawl](https://github.com/mtkennerly/shawl) (see [Windows Service Installation](#windows-service-installation))
+* When installing for all users, installs Syncthing as a Windows service (see [Windows Service Installation](#windows-service-installation))
 
 * Supports adding a Windows Firewall rule for Syncthing (see [Windows Firewall Rules](#windows-firewall-rules))
 
@@ -82,15 +85,27 @@ Syncthing Windows Setup (herein referred to as "Setup") provides a [Syncthing](h
 
 See `history.md`.
 
-## Upgrading Administrative Installations
+## Upgrade Details
 
 Administrative installations in versions 1.19.1 and older configured the Windows service to run using the Windows built-in **LocalService** account. To improve security, Setup versions newer than 1.19.1 configure the Windows service to run using a local service user account instead (**SyncthingServiceAcct** by default). As a part of this change, the Syncthing configuration data is now located in the _CommonAppData_`\Syncthing` folder (e.g., `C:\ProgramData\Syncthing`).
 
 If you upgrade an administrative installation from version 1.19.1 or older, Setup version 1.27.0 and newer will uninstall the old version and install the new version, but it will no longer migrate the configuration data. Because of this change, it is recommended to first upgrade to version 1.26.1 to migrate the configuration data, and then upgrade again to version 1.27.0 or later.
 
+Starting in version 1.27.11, Setup automatically downloads and installs the latest version of Syncthing for Windows from GitHub. If Setup can't connect to GitHub, you must perform an offline installation (see [Offline Installation](#offline-installation)).
+
 ## Downgrading an Installation
 
-To downgrade an installation, first uninstall the current installed version, and then reinstall the older version. (Keep in mind that the Syncthing executable will automatically upgrade itself unless automatic upgrades are disabled.)
+To downgrade a Syncthing installation, do the following:
+
+1. Disable Syncthing's automatic upgrade setting.
+
+2. Stop Syncthing.
+
+3. Manually replace the `syncthing.exe` file with your preferred version.
+
+4. Start Syncthing.
+
+> NOTE: If you run Setup to reinstall or upgrade Syncthing, the **Automatic upgrade interval** setting on the **Select Configuration Settings** wizard page (or the `/autoupgradeinterval` command-line parameter) will override the **Automatic Upgrades** setting in the Syncthing configuration GUI.
 
 ## Changing Installation Type
 
@@ -100,23 +115,23 @@ If you installed using administrative (all users) installation mode and want to 
 
 2. Run Setup again and choose your preferred installation mode
 
-If you want to keep the same configuration, you will need to replace the files in the Syncthing configuration folder. The location of the Syncthing configuration folder depends on the installation mode; see [Finding the Syncthing Configuration Folder](#finding-the-syncthing-configuration-folder) for details.
+If you want to keep the same configuration, you will need to replace the content of the Syncthing configuration folder. The location of the Syncthing configuration folder depends on the installation mode; see [Finding the Syncthing Configuration Folder](#finding-the-syncthing-configuration-folder) for details.
 
 ## Setup Command Line Parameters
 
 The following table lists the most common Setup command line parameters:
 
-Parameter                 | Description
----------                 | -----------
-`/currentuser`            | Runs Setup in non-administrative (current user) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)).
-`/allusers`               | Runs Setup in administrative (all users) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)).
-`/dir="`_location_`"`     | Specifies the installation folder. The default installation folder depends on whether Setup runs in administrative (all users) or non administrative (current user) installation mode.
-`/group="`_name_`"`       | Specifies the Start Menu group name. The default group name is **Syncthing**.
-`/tasks="`_tasks_`"`      | Specifies the tasks for the **Select Additional Tasks** wizard page (see [Setup Tasks](#setup-tasks)).
-`/mergetasks="`_tasks_`"` | Like `/tasks`, except Setup merges the specified tasks with the set of tasks that would have otherwise been selected by default.
-`/noicons`                | Prevents creation of a Start Menu group.
-`/silent`                 | Runs Setup without requiring user interaction (see [Silent Install and Uninstall](#silent-install-and-uninstall)).
-`/log="`_filename_`"`     | Logs Setup activity to the specified file. The default is not to create a log file.
+Parameter                                | Description
+---------                                | -----------
+`/currentuser`                           | Runs Setup in non-administrative (current user) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)).
+`/allusers`                              | Runs Setup in administrative (all users) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)).
+`/dir="`_location_`"`                    | Specifies the installation folder. The default installation folder depends on whether Setup runs in administrative (all users) or non administrative (current user) installation mode.
+`/group="`_name_`"`                      | Specifies the Start Menu group name. The default group name is **Syncthing**.
+`/tasks="`_task_[`,`_task_[...]]`"`      | Selects one or more tasks on the **Select Additional Tasks** wizard page (see [Setup Tasks](#setup-tasks)).
+`/mergetasks="`_task_[`,`_task_[...]]`"` | Like `/tasks`, except Setup merges the specified tasks with the set of tasks that would have otherwise been selected by default.
+`/noicons`                               | Prevents creation of a Start Menu group.
+`/silent`                                | Runs Setup without requiring user interaction (see [Silent Install and Uninstall](#silent-install-and-uninstall)).
+`/log="`_filename_`"`                    | Logs Setup activity to the specified file. The default is not to create a log file.
 
 See [Inno Setup's documentation](https://jrsoftware.org/ishelp/index.php?topic=setupcmdline) for more details about the above parameters.
 
@@ -124,26 +139,57 @@ In addition to the standard Inno Setup parameters, Setup also supports some cust
 
 Parameter                            | Description
 ---------                            | -----------
-`/autoupgradeinterval=`_interval_    | **[*]** Specifies the number of hours that Syncthing should check for upgrades and automatically upgrade itself. The default value is 12 hours. Specify **0** to disable automatic upgrades.
+`/autoupgradeinterval=`_interval_    | **[*]** Specifies the number of hours that Syncthing should check for upgrades and automatically upgrade itself. The default value is 12 hours. Specify **0** to disable Syncthing's automatic upgrade feature.
 `/listenaddress=`_address_           | **[*]** Specifies the listen address for the web GUI configuration page. The default listen address is **127.0.0.1**.
 `/listenport=`_port_                 | **[*]** Specifies the TCP port number for the web GUI configuration page. The default port number is **8384**.
 `/relaysenabled=`_value_             | **[*]** Specifies whether relays are enabled (_value_ must be either **true** or **false**). The default value is **true** (i.e., relays are enabled).
 `/serviceaccountusername=`_username_ | For administrative installation mode, specifies the local service user account user name. The default user name is **SyncthingServiceAcct**.
-`/noconfigpage`                      | Prevents the "Open Syncthing configuration page" checkbox from appearing on the final Setup wizard page.
+`/noconfigpage`                      | Prevents the **Open Syncthing configuration page** checkbox from appearing on the final Setup wizard page.
+`/zipfilepath="`_filename_`"`        | Specifies the path and filename of the zip file Setup uses to extract the Syncthing files (see [Offline Installation](#offline-installation)).
 
 Please note the following:
 
-* The `/autoupgradeinterval` parameter affects the `syncthing.exe` executable only (it does not download or run a new version of Setup). If this setting is greater than 0 and Syncthing detects a new version released by the Syncthing team on the Internet, only the `syncthing.exe` executable is upgraded.
+* The `/autoupgradeinterval` parameter affects the `syncthing.exe` executable only (it does not download or run a new version of Setup). If this setting is greater than 0 and Syncthing detects a new version released by the Syncthing team on the Internet, Syncthing will upgrade itself. (The Syncthing configuration GUI also allows enabling or disabling automatic upgrading, but reinstalling or upgrading Syncthing using Setup will override the configuration GUI setting.)
 
 * Please read the [Syncthing documentation page about the GUI listen address](https://docs.syncthing.net/users/guilisten.html) before changing the listen address and port numbers from the defaults.
 
 * For more information about relays, please see the [Syncthing documentation page about relaying](https://docs.syncthing.net/users/relaying). Please note that relaying might trigger network security alerts if an outgoing connection is made to a relay network host on the Internet that is being shared by a network service prohibited by network security teams on business or government networks. It is recommended to check with network security teams before using Syncthing on these kinds of networks.
 
-* It is recommended not to use the `/serviceaccountusername` parameter to change the local service account user name unless that user name is already in use for some other purpose.
+* It is recommended not to use the `/serviceaccountusername` parameter to change the local service account user name except in the extremely rare case that the username is already in use.
+
+## Offline Installation
+
+For Windows-based computers that are unable to download files from GitHub using https, Setup supports offline installation. To facilitate offline installation, you must download the zip file for the Windows version of Syncthing from a separate computer that can connect to GitHub. You can download the latest version of the zip file from the Syncthing project's **Releases** page:
+
+https://github.com/syncthing/syncthing/releases/latest
+
+The zip file uses the following format:
+
+`syncthing-windows-`_platform_`-v`_version_`.zip`
+
+Where:
+
+*  _platform_ is one of the following: **amd64**, **386**, or **arm64**
+
+* _version_ is the Syncthing version number
+
+For example: `syncthing-windows-amd64-v1.27.11.zip` (**amd64** is the most common version)
+
+Once you have the zip file, you can specify it for Setup by doing one of the following:
+
+* Select the installation zip file on the **Select Installation Zip File** wizard page in Setup, or
+
+* Specify the full path and filename of the installation zip file using the **/zipfilepath** parameter on Setup's command line (see [Setup Command Line Parameters](#setup-command-line-parameters)).
+
+Please note the following behaviors:
+
+* If Setup can't connect to GitHub to retrieve the latest Syncthing version information, it will assume an offline installation and display the **Select Installation Zip File** wizard page.
+
+* If you specify the **/zipfilepath** parameter, Setup will not attempt to connect to GetHub to retrieve Syncthing version information or download the latest installation zip file.
 
 ## Administrative vs. Non Administrative Installation Mode
 
-Setup supports both non administrative (current user) and administrative (all users) installation modes. For an initial installation (not a reinstall or upgrade), Setup displays a dialog box requesting whether you want to install for the current user only (non administrative installation mode) or for all users (administrative installation mode). You can bypass the dialog by specifying either `/currentuser` or `/allusers` on Setup's command line (see [Setup Command Line Parameters](#setup-command-line-parameters)). When you run a newer version of Setup (i.e., an upgrade) or reinstall the current version, Setup does does not display the dialog. To perform an initial installation in silent mode (see [Silent Install and Uninstall](#silent-install-and-uninstall)), you must specify either `/currentuser` or `/allusers` on Setup's command line.
+Setup supports both non administrative (current user) and administrative (all users) installation modes. For an initial installation (not a reinstall or upgrade), Setup displays a dialog box requesting whether you want to install for the current user only (non administrative installation mode) or for all users (administrative installation mode). You can bypass the dialog by specifying either `/currentuser` or `/allusers` on Setup's command line (see [Setup Command Line Parameters](#setup-command-line-parameters)). When you run a newer version of Setup or reinstall the current version, Setup does does not display the dialog. To perform an initial installation in silent mode (see [Silent Install and Uninstall](#silent-install-and-uninstall)), you must specify either `/currentuser` or `/allusers` on Setup's command line.
 
 The main advantage of installing in administrative (all users) installation mode is that Syncthing runs as a Windows service and runs without any users being logged on; however, you must manually configure folder permissions to add folders to the Syncthing configuration (see [Granting Folder Permissions for the Service Account](#granting-folder-permissions-for-the-service-account)).
 
@@ -159,15 +205,15 @@ The following notes apply to non administrative (current user) installation mode
 
 * Setup does not install Syncthing as a Windows service
 
-* By default, Setup creates a scheduled task that starts Syncthing in the background when the current user logs on (you can change this by deselecting the checkbox on the **Select Additional Tasks** wizard page)
+* By default, Setup creates a scheduled task that starts Syncthing in the background when the current user logs on; you can change this by deselecting the **Start Syncthing automatically when logging on** checkbox on the **Select Additional Tasks** wizard page
 
 * Syncthing runs only when the installing user logs on
 
 * Starting and stopping Syncthing is managed by [Start Menu shortcuts](#start-menu-shortcuts)
 
-* Setup prompts to create a Windows firewall rule for Syncthing (requires administrative permissions)
+* Setup prompts to create a Windows Firewall rule for Syncthing (requires administrative permissions)
 
-* By default, Setup starts Syncthing after installation completes if a firewall rule exists for it; you can change this by deselecting the checkbox on the last Setup wizard page or by specifying the `/nostart` parameter on Setup's command line
+* By default, Setup starts Syncthing after installation completes if a firewall rule exists for it; you can change this by deselecting the **Start Syncthing after installation** checkbox on the **Select Additional Tasks** wizard page
 
 * No folder permission changes are required to add the current user's folders to the Syncthing configuration
 
@@ -183,15 +229,15 @@ The following notes apply to administrative (all users) installation mode:
 
 * Setup installs Syncthing as a Windows service (see [Windows Service Installation](#windows-service-installation))
 
-* By default, Syncthing starts automatically when the system boots (you can change this by deselecting the checkbox on the **Select Additional Tasks** wizard page)
+* By default, Syncthing starts automatically when the system boots; you can change this by deselecting the **Start Syncthing service automatically when system boots** checkbox on the **Select Additional Tasks** wizard page
 
 * Syncthing runs as a service and synchronizes folders even when no users are logged on
 
 * Starting and stopping Syncthing is managed by stopping and starting the Windows service
 
-* Setup automatically creates a Windows firewall rule for Syncthing
+* Setup automatically creates a Windows Firewall rule for Syncthing
 
-* By default, Setup starts the Syncthing service after installation completes; you can change this by deselecting the checkbox on the last Setup wizard page or by specifying the `/nostart` parameter on Setup's command line
+* By default, Setup starts the Syncthing service after installation completes; you can change this by deselecting the **Start Syncthing service after installation** checkbox on the **Select Additional Tasks** wizard page
 
 * You must manually grant folder permissions for folders you want to add to the Syncthing configuration (see [Granting Folder Permissions for the Service Account](#granting-folder-permissions-for-the-service-account))
 
@@ -199,7 +245,7 @@ The following notes apply to administrative (all users) installation mode:
 
 ## Windows Service Installation
 
-When you run Setup in administrative (all users) installation mode, it installs a Windows service for Syncthing using [shawl](https://github.com/mtkennerly/shawl). The service runs using a local service account (**SyncthingServiceAcct** by default). By default, Setup configures the service to start at boot. You can change this default by deselecting the `startatboot` task when installing (see [Setup Tasks](#setup-tasks)).
+When you run Setup in administrative (all users) installation mode, it installs Syncthing as a Windows service. The service runs using a local service account (**SyncthingServiceAcct** by default). By default, Setup configures the service to start at boot. You can change this default by deselecting the `startatboot` task when installing (see [Setup Tasks](#setup-tasks)).
 
 ### Local User Service Account Considerations
 
@@ -231,7 +277,7 @@ Once the local service user account has "Modify" permissions for the folder, you
 
 ## Setup Tasks
 
-The **Select Additional Tasks** wizard page in Setup specifies additional tasks that Setup should perform. Available tasks depend on whether Setup runs in non administrative (current user) or administrative (all users) installation mode.
+The **Select Additional Tasks** wizard page in Setup specifies additional tasks that Setup should perform, as described in the following table:
 
 Task Description                                             | Name                       | Installation Mode
 ----------------                                             | ----                       | -----------------
@@ -240,8 +286,32 @@ Start automatically only if the computer is running AC power | `startatlogon\acp
 Start Syncthing after installation                           | `startafterinstall`        | Current user
 Start Syncthing service automatically when system boots      | `startatboot`              | All users
 Start Syncthing service after installation                   | `startserviceafterinstall` | All users
+Create desktop shortcut for Syncthing configuration page     | `desktopicon`              | Both
 
-The `/tasks` and `/mergetasks` command line parameters (see [Setup Command Line Parameters](#setup-command-line-parameters)) specify which tasks are selected. By default, all tasks except for `startatlogon\acpoweronly` are selected by default.
+The `/tasks` and `/mergetasks` command line parameters (see [Setup Command Line Parameters](#setup-command-line-parameters)) allow you to select and deselect tasks using the command line. By default, all tasks are selected except for the following:
+
+* `startatlogon\acpoweronly`
+* `desktopicon`
+
+Examples:
+
+* Create a desktop shortcut in addition to all other tasks selected by default:
+
+    `/mergetasks=desktopicon`
+
+* For an administrative installation, do not start the Syncthing service after installation, but leave all other default tasks selected:
+
+    `/mergetasks=!startserviceafterinstall`
+
+* For a non administrative installation, specify only to start Syncthing at logon and do not select any other tasks:
+
+    `/tasks=startatlogon`
+
+* Remove the desktop shortcut during a reinstall and do not change the state of any other tasks:
+
+    `/mergetasks=!desktopicon`
+
+See [Inno Setup's documentation](https://jrsoftware.org/ishelp/index.php?topic=setupcmdline) for more details about the `/tasks` and `/mergetasks` command line parameters.
 
 ## Start Menu Shortcuts
 
@@ -267,6 +337,10 @@ If you installed Syncthing for the current user, Setup creates a scheduled task 
 
 If you did not select the `startatlogon` task when installing and want to create the task, do either of the following:
 
+* Run setup to reinstall Syncthing and select the `startatlogon` task (i.e., the **Start Syncthing automatically when logging on** checkbox on the **Select Additional Tasks** page).
+
+OR
+
 1. Open a command prompt or PowerShell window.
 
 2. Run the following command:
@@ -275,13 +349,9 @@ If you did not select the `startatlogon` task when installing and want to create
 
     (where `C:\Users\username\appData\Local\Programs\Syncthing` is the Syncthing installation folder; replace `username` with the correct username)
 
-OR
-
-* Reinstall Syncthing and select the `startatlogon` task (i.e., the **Start Syncthing automatically when logging on** checkbox on the **Select Additional Tasks** page).
-
 If you want to disable the logon task instead, do the following:
 
-1. Open the Windows **Task Scheduler** application.
+1. Open the Windows Task Scheduler application.
 
 2. Right-click the **Start Syncthing at logon (_username_)** task and choose **Disable**.
 
@@ -289,15 +359,15 @@ If you want to disable the logon task instead, do the following:
 
 If you installed Syncthing for all users (i.e., the Windows service is installed), do the following:
 
-1. Open the Windows **Services** application.
+* Run Setup to reinstall Syncthing and select or deselect the `startatboot` task (i.e., the **Start Syncthing service automatically when system boots** checkbox on the **Select Additional Tasks** page).
+
+OR
+
+1. Open the Windows Services application.
 
 2. Double-click the Syncthing service.
 
 3. Change **Startup type** to **Automatic (Delayed Start)** or **Manual**, then Click **OK**.
-
-OR
-
-* Reinstall Syncthing and select or deselect the `startatboot` task (i.e., the **Start Syncthing service automatically when system boots** checkbox on the **Select Additional Tasks** page).
 
 Note that these steps require administrative permissions.
 
@@ -325,13 +395,13 @@ OR
 
    The output of this command will indicate whether Syncthing is currently running.
 
-> NOTE: No matter whether you use the Task Manager application or the **tasklist** command, is is normal for `syncthing.exe` to be listed more than once in the output.
+> NOTE: No matter whether you use the Task Manager application or the **tasklist** command, it is normal for there to be more than one running instance of `syncthing.exe`.
 
 ### Checking if Syncthing is Running as a Service
 
 If you ran Setup in administrative (all users) installation mode, do the following:
 
-1. Open the Windows **Services** Application.
+1. Open the Windows Services application.
 
 2. Find the Syncthing service in the list.
 
@@ -341,7 +411,7 @@ If you ran Setup in administrative (all users) installation mode, do the followi
 
 ## Windows Firewall Rules
 
-Syncthing requires permission to communicate through the Windows firewall. Creating and removing firewall rules requires administrative privileges.
+Syncthing requires permission to communicate through the Windows Firewall. Creating and removing firewall rules requires administrative privileges.
 
 ### Firewall Rule Creation
 
@@ -357,7 +427,7 @@ If you ran Setup using non administrative installation mode and need to create a
 
     cscript "C:\Users\username\AppData\Local\Programs\Syncthing\SyncthingFirewallRule.js" /create
 
-(where `C:\Users\username\appData\Local\Programs\Syncthing` is the Syncthing installation folder; ; replace `username` with the correct username)
+(where `C:\Users\username\appData\Local\Programs\Syncthing` is the Syncthing installation folder; replace `username` with the correct username)
 
 ### Firewall Rule Removal
 
@@ -384,7 +454,7 @@ Setup installs a set of helper tools to the installation folder to facilitate ea
 Tool                       | Installation Mode        | Description
 ------                     | -----------------        | -----------
 `SetSyncthingConfig.js`    | Both                     | Setup uses this script to create and/or configure the Syncthing configuration file (`config.xml`).
-`SyncthingFirewallRule.js` | Both                     | Adds, removes, and tests for the existence of a Windows firewall rule for Syncthing (prompts for administrative permissions if required).
+`SyncthingFirewallRule.js` | Both                     | Adds, removes, and tests for the existence of a Windows Firewall rule for Syncthing (prompts for administrative permissions if required).
 `SyncthingLogonTask.js`    | Current user (non admin) | Adds or removes a scheduled task that runs the `StartSyncthing.js` script at logon.
 `stctl.exe`                | Current user (non admin) | Helper program for starting and stopping Syncthing for the current user.
 `asmt.exe`                 | All users (admin)        | Helper program for installing and/or resetting the service account and service configuration.
@@ -392,7 +462,7 @@ Tool                       | Installation Mode        | Description
 
 ## Resetting the Service Account Password
 
-If you installed using administrative (all users) installation mode, use the following steps to reset the service account password:
+If you installed using administrative (all users) installation mode and want to reset the service account password, do the following:
 
 1. Open a PowerShell or cmd.exe window as administrator
 
@@ -458,7 +528,7 @@ To perform an initial install (i.e., not a reinstall or upgrade) silently in non
 
 * Does not create a firewall rule for Syncthing (this is because creating a firewall rule requires administrative permissions, which would cause a prompt that would prevent the silent installation from completing)
 
-* Starts Syncthing for the current user if a firewall rule for Syncthing is already in place (unless you also specify `/nostart` on Setup's command line)
+* Starts Syncthing for the current user if a firewall rule for Syncthing already exists
 
 To ensure Syncthing works correctly after a non administrative (current user) silent installation, create the firewall rule manually (see [Creating the Firewall Rule Manually](#creating-the-firewall-rule-manually)) before starting Syncthing.
 
@@ -472,7 +542,7 @@ To perform an initial install (i.e., not a reinstall or upgrade) silently in adm
 
 * Automatically creates a firewall rule for Syncthing
 
-* Starts the Syncthing service after installation completes (unless you also specify `/nostart` on Setup's command line)
+* Starts the Syncthing service after installation completes
 
 A silent reinstall or upgrade does not require the `/allusers` parameter.
 
@@ -501,3 +571,7 @@ Special thanks to the following:
 * mtkennerly for [shawl](https://github.com/mtkennerly/shawl)
 
 * Jordan Russell and Martijn Laan for [Inno Setup](https://www.jrsoftware.org/isinfo.php)
+
+* [Info-ZIP](https://infozip.sourceforge.net/) maintainers
+
+* [jq](https://jqlang.github.io/jq/) maintainers
