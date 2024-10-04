@@ -2,6 +2,14 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.27.12 (2024-10-04)
+
+* Moved Setup's version number from the main wizard window title to the version number of the executable.
+
+* Setup now checks for a valid `HKEY_CLASSES_ROOT\.js` WSH script registration and aborts if the value is not correct.
+
+* Added section in documentation regarding initialization errors.
+
 ## 1.27.11 (2024-09-03)
 
 * Setup now automatically downloads and installs the latest version of Syncthing from GitHub.

@@ -67,9 +67,10 @@ UninstallDisplayIcon={app}\syncthing.ico
 UninstallDisplayName={code:GetUninstallDisplayName}
 VersionInfoProductName={#AppName}
 VersionInfoCompany={#AppPublisher}
+VersionInfoVersion={#SetupVersion}
 
 [Messages]
-SetupWindowTitle=Syncthing Windows Setup [{#SetupVersion}]
+SetupWindowTitle=Syncthing Windows Setup
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; InfoBeforeFile: "en-README.rtf"
@@ -262,7 +263,7 @@ var
   DownloadPage0: TDownloadWizardPage;
   // Configuration page values
   AutoUpgradeInterval, ListenAddress, ListenPort, RelaysEnabled: string;
-  ExecOutputFirstLine, ServiceAccountUserName, ZipFilePath, LatestVersionTag: string;
+  ServiceAccountUserName, ExecOutputFirstLine, ZipFilePath, LatestVersionTag: string;
 
 // Windows API functions
 function GetUserNameExW(NameFormat: Integer; lpNameBuffer: string; var nSize: DWORD): Boolean;
@@ -375,6 +376,15 @@ begin
   result := VersionInfo.ProductType = VER_NT_DOMAIN_CONTROLLER;
 end;
 
+function IsWshJsScriptRegistrationValid(): Boolean;
+var
+  Value: string;
+begin
+  result := RegQueryStringValue(HKEY_CLASSES_ROOT, '.js', '', Value);
+  if result then
+    result := SameText(Value, 'JSFile');
+end;
+
 procedure OnExecAndLogOutput(const S: String; const Error, FirstLine: Boolean);
 begin
   if (not Error) and (ExecOutputFirstLine = '') and (Trim(S) <> '') then
@@ -462,7 +472,29 @@ function InitializeSetup(): Boolean;
 var
   Msg: string;
 begin
-  result := true;
+  if IsAdminInstallMode() then
+  begin
+    ServiceAccountUserName := GetPreviousData('ServiceAccountUserName',
+      Trim(ExpandConstant('{param:serviceaccountusername|{#DefaultServiceAccountUserName}}')));
+    result := not IsDomainController();
+    if not result then
+    begin
+      Msg := CustomMessage('InitializeSetupError0');
+      Log(Msg);
+      if not WizardSilent() then
+        MsgBox(Msg, mbCriticalError, MB_OK);
+      exit;
+    end;
+  end;
+  result := IsWshJsScriptRegistrationValid();
+  if not result then
+  begin
+    Msg := CustomMessage('InitializeSetupError1');
+    Log(Msg);
+    if not WizardSilent() then
+      MsgBox(Msg, mbCriticalError, MB_OK);
+    exit;
+  end;
   ExecOutputFirstLine := '';
   // Custom command line parameters
   AutoUpgradeInterval := GetPreviousData('AutoUpgradeInterval',
@@ -473,20 +505,6 @@ begin
     Trim(ExpandConstant('{param:listenport|{#DefaultListenPort}}')));
   RelaysEnabled := GetPreviousData('RelaysEnabled',
     Trim(ExpandConstant('{param:relaysenabled|{#DefaultRelaysEnabled}}')));
-  if IsAdminInstallMode() then
-  begin
-    ServiceAccountUserName := GetPreviousData('ServiceAccountUserName',
-      Trim(ExpandConstant('{param:serviceaccountusername|{#DefaultServiceAccountUserName}}')));
-    result := (not IsDomainController()) or
-      (IsDomainController() and (ParamStrExists('/allowdcserviceinstall')));
-    if not result then
-    begin
-      Msg := CustomMessage('InitializeSetupError0');
-      Log(Msg);
-      if not WizardSilent() then
-        MsgBox(Msg, mbCriticalError, MB_OK);
-    end;
-  end;
   ExtractTemporaryFile('unzip.exe');
   ZipFilePath := Trim(ExpandConstant('{param:zipfilepath}'));
   if ZipFilePath = '' then
@@ -496,7 +514,7 @@ begin
     GetLatestVersionTag();
     if LatestVersionTag = '' then
     begin
-      Msg := CustomMessage('InitializeSetupError1');
+      Msg := CustomMessage('InitializeSetupWarning0');
       Log(Msg);
     end;
   end
@@ -575,7 +593,7 @@ var
   ProcArch: string;
 begin
   result := '';
-  case ProcessorArchitecture of
+  case ProcessorArchitecture() of
     paX86, paUnknown: ProcArch := '386';
     paX64: ProcArch := 'amd64';
     paArm64: ProcArch := 'arm64';

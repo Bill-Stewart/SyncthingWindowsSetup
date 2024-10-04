@@ -15,6 +15,9 @@ Syncthing Windows Setup is a lightweight yet full-featured Windows installer for
 - [Upgrade Details](#upgrade-details)
 - [Downgrading an Installation](#downgrading-an-installation)
 - [Changing Installation Type](#changing-installation-type)
+- [Setup Initialization Errors](#setup-initialization-errors)
+  - [Installation for All Users not Allowed on Domain Controllers](#installation-for-all-users-not-allowed-on-domain-controllers)
+  - [Invalid WSH Script Registration](#invalid-wsh-script-registration)
 - [Setup Command Line Parameters](#setup-command-line-parameters)
 - [Offline Installation](#offline-installation)
 - [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)
@@ -116,6 +119,25 @@ If you installed using administrative (all users) installation mode and want to 
 2. Run Setup again and choose your preferred installation mode
 
 If you want to keep the same configuration, you will need to replace the content of the Syncthing configuration folder. The location of the Syncthing configuration folder depends on the installation mode; see [Finding the Syncthing Configuration Folder](#finding-the-syncthing-configuration-folder) for details.
+
+## Setup Initialization Errors
+
+This section discusses potential errors that may occur during Setup's initialization phase that will abort the installation process.
+
+### Installation for All Users not Allowed on Domain Controllers
+
+For various reasons, Setup does not permit installation for all users (i.e., the Windows service) on Active Directory domain controller servers. If you need to run Syncthing on domain controllers, this author's recommendation is to run `syncthing.exe` using a Group Managed Service Account (gMSA). See Microsoft's documentation for more information about gMSAs.
+
+### Invalid WSH Script Registration
+
+Setup uses Windows Script Host (WSH) scripts to perform a number of tasks. On some computers, the WSH script registration for JScript (`.js`) files on the computer is missing or incorrect. To ensure it can complete successfully, Setup checks for the following value in the registry:
+
+Path: `HKEY_CLASSES_ROOT\.js`  
+Default value: `JSFile`
+
+Setup will abort if this registry value is not correct. To fix this problem, use whatever tool you prefer (e.g., the Windows Registry Editor) to correct the default value at this registry location to `JSFile`. For example, you can run the following command from an elevated command line (cmd.exe or PowerShell) window:
+
+    reg add "HKCR\.js" /ve /d "JSFile"
 
 ## Setup Command Line Parameters
 

@@ -40,8 +40,9 @@ TasksCreateDesktopIcon=Create &desktop shortcut for Syncthing configuration page
 RunStatusMsg=Completing setup tasks...
 RunPostInstallOpenConfigPage=&Open Syncthing configuration page
 ; Initialization
-InitializeSetupError0=Error: Installation for all users is not permitted on a domain controller.
-InitializeSetupError1=Error: Unable to retrieve latest version information from github.com.
+InitializeSetupError0=Setup initialization error: Installation for all users is not permitted on a domain controller.%n%nSetup will now exit.
+InitializeSetupError1=Setup initialization error: WSH script registration is not valid.%n%nTo correct this issue, please see the "Setup Initalization Errors" section in the documentation.%n%nSetup will now exit.
+InitializeSetupWarning0=Warning: Unable to retrieve latest version information from github.com.
 ; Memo pages
 MemoPage0Caption=License
 MemoPage0Description=Please see below for license information.
