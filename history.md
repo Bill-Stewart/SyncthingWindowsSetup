@@ -2,6 +2,10 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.27.28 (2024-10-16)
+
+* Fixed: zip file extraction now (correctly) overwrites destination files.
+
 ## 1.27.12 (2024-10-04)
 
 * Moved Setup's version number from the main wizard window title to the version number of the executable.

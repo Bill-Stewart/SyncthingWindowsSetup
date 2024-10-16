@@ -1081,7 +1081,7 @@ begin
   if CurStep = ssPostInstall then
   begin
     ExecEx(ExpandConstant('{tmp}\unzip.exe'),
-      ExpandConstant(Format('-jn -d "{app}" "%s" {#UnzipPattern}', [ZipFilePath])), true);
+      ExpandConstant(Format('-jo -d "{app}" "%s" {#UnzipPattern}', [ZipFilePath])), true);
     if GetVersionNumbersString(ExpandConstant('{app}\syncthing.exe'), Version) then
     begin
       Log(FmtMessage(CustomMessage('InstalledVersion'), [Version]));
