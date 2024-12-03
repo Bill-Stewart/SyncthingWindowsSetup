@@ -18,14 +18,15 @@ Syncthing Windows Setup is a lightweight yet full-featured Windows installer for
 - [Setup Initialization Errors](#setup-initialization-errors)
   - [Installation for All Users not Allowed on Domain Controllers](#installation-for-all-users-not-allowed-on-domain-controllers)
   - [Invalid WSH Script Registration](#invalid-wsh-script-registration)
+  - [Administrative Installation Detected](#administrative-installation-detected)
 - [Setup Command Line Parameters](#setup-command-line-parameters)
 - [Offline Installation](#offline-installation)
-- [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)
+- [Non Administrative vs. Administrative Installation Mode](#non-administrative-vs-administrative-installation-mode)
   - [Non Administrative (Current User) Installation Mode](#non-administrative-current-user-installation-mode)
   - [Administrative (All Users) Installation Mode](#administrative-all-users-installation-mode)
-- [Windows Service Installation](#windows-service-installation)
-  - [Local User Service Account Considerations](#local-user-service-account-considerations)
-- [Granting Folder Permissions for the Service Account](#granting-folder-permissions-for-the-service-account)
+    - [Windows Service Installation](#windows-service-installation)
+    - [Local User Service Account Considerations](#local-user-service-account-considerations)
+    - [Granting Folder Permissions for the Service Account](#granting-folder-permissions-for-the-service-account)
 - [Setup Tasks](#setup-tasks)
 - [Start Menu Shortcuts](#start-menu-shortcuts)
 - [Managing Automatic Startup](#managing-automatic-startup)
@@ -72,7 +73,7 @@ Syncthing Windows Setup (herein referred to as "Setup") provides a [Syncthing](h
 
 * Supports non administrative (current user) and administrative (all users) installation (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode))
 
-* When installing for the current user, Setup creates a scheduled task that starts Syncthing at logon (if selected)
+* When installing for the current user (the default), Setup creates a scheduled task that starts Syncthing at logon (if selected)
 
 * When installing for all users, installs Syncthing as a Windows service (see [Windows Service Installation](#windows-service-installation))
 
@@ -112,11 +113,7 @@ To downgrade a Syncthing installation, do the following:
 
 ## Changing Installation Type
 
-If you installed using administrative (all users) installation mode and want to use non administrative (per user) installation mode (or vice versa), you must do the following:
-
-1. Uninstall the current installed version
-
-2. Run Setup again and choose your preferred installation mode
+If you installed using non administrative (current user) installation mode and want to use administrative (all users) installation mode instead (or vice versa), you must uninstall and reinstall using your preferred installation mode.
 
 If you want to keep the same configuration, you will need to replace the content of the Syncthing configuration folder. The location of the Syncthing configuration folder depends on the installation mode; see [Finding the Syncthing Configuration Folder](#finding-the-syncthing-configuration-folder) for details.
 
@@ -139,14 +136,18 @@ Setup will abort if this registry value is not correct. To fix this problem, use
 
     reg add "HKCR\.js" /ve /d "JSFile"
 
+### Administrative Installation Detected
+
+If Setup detects that the package is installed in administrative (all users) installation mode and you did not specify the `/allusers` parameter on Setup's command line, it will abort the installation and instruct the user to restart setup with the `/allusers` parameter.
+
 ## Setup Command Line Parameters
 
 The following table lists the most common Setup command line parameters:
 
 Parameter                                | Description
 ---------                                | -----------
-`/currentuser`                           | Runs Setup in non-administrative (current user) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)).
-`/allusers`                              | Runs Setup in administrative (all users) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)).
+`/currentuser`                           | Runs Setup in non-administrative (current user) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)). This is the default and is recommended for most users.
+`/allusers`                              | Runs Setup in administrative (all users) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)). This installs the Windows service and is recommended for more advanced users. NOTE: You must specify this parameter if performing a reinstall in administrative (all users) installation mode, even if the package is already installed.
 `/dir="`_location_`"`                    | Specifies the installation folder. The default installation folder depends on whether Setup runs in administrative (all users) or non administrative (current user) installation mode.
 `/group="`_name_`"`                      | Specifies the Start Menu group name. The default group name is **Syncthing**.
 `/tasks="`_task_[`,`_task_[...]]`"`      | Selects one or more tasks on the **Select Additional Tasks** wizard page (see [Setup Tasks](#setup-tasks)).
@@ -209,21 +210,25 @@ Please note the following behaviors:
 
 * If you specify the **/zipfilepath** parameter, Setup will not attempt to connect to GetHub to retrieve Syncthing version information or download the latest installation zip file.
 
-## Administrative vs. Non Administrative Installation Mode
+## Non Administrative vs. Administrative Installation Mode
 
-Setup supports both non administrative (current user) and administrative (all users) installation modes. For an initial installation (not a reinstall or upgrade), Setup displays a dialog box requesting whether you want to install for the current user only (non administrative installation mode) or for all users (administrative installation mode). You can bypass the dialog by specifying either `/currentuser` or `/allusers` on Setup's command line (see [Setup Command Line Parameters](#setup-command-line-parameters)). When you run a newer version of Setup or reinstall the current version, Setup does does not display the dialog. To perform an initial installation in silent mode (see [Silent Install and Uninstall](#silent-install-and-uninstall)), you must specify either `/currentuser` or `/allusers` on Setup's command line.
+By default, Setup installs Syncthing for the current user only. This is recommeded for most users.
 
-The main advantage of installing in administrative (all users) installation mode is that Syncthing runs as a Windows service and runs without any users being logged on; however, you must manually configure folder permissions to add folders to the Syncthing configuration (see [Granting Folder Permissions for the Service Account](#granting-folder-permissions-for-the-service-account)).
+If you want to install Syncthing as a Windows service (recommended for more advanced users), you must specify the `/allusers` parameter on Setup's command line (see [Setup Command Line Parameters](#setup-command-line-parameters)). This parameter is also required if you want to reinstall the service.
+
+> NOTE: Installing in administrative (all users) installation mode means you must manually configure folder permissions to add folders to the Syncthing configuration (see [Granting Folder Permissions for the Service Account](#granting-folder-permissions-for-the-service-account)).
 
 See below for the differences between the two modes.
 
 ### Non Administrative (Current User) Installation Mode
 
-The following notes apply to non administrative (current user) installation mode:
+Non administrative (current user) installation mode is the default and is recommended for most users. The following notes apply to this installation mode:
 
 * Setup installs Syncthing for the current user only
 
 * The default installation folder is _LocalAppData_`\Programs\Syncthing` (where _LocalAppData_ is the current user's local application data folder; e.g., `C:\Users\UserName\AppData\Local`)
+
+* The Syncthing configuration folder is _LocalAppData_`\Syncthing` (e.g., `C:\Users\UserName\AppData\Local`; see [Finding the Syncthing Configuration Folder](#finding-the-syncthing-configuration-folder))
 
 * Setup does not install Syncthing as a Windows service
 
@@ -243,11 +248,13 @@ The following notes apply to non administrative (current user) installation mode
 
 ### Administrative (All Users) Installation Mode
 
-The following notes apply to administrative (all users) installation mode:
+Administrative (all users) installation mode installs Syncthing as a Windows service and is recommended only for more advanced users. The following notes apply to this installation mode:
 
 * Setup installs Syncthing for all users of the computer
 
 * The default installation folder is _ProgramFiles_`\Syncthing` (where _ProgramFiles_ is the system's `Program Files` folder; e.g., `C:\Program Files`)
+
+* The Syncthing configuration folder is _CommonAppData_`\Syncthing` (e.g., `C:\ProgramData\Syncthing`; see [Finding the Syncthing Configuration Folder](#finding-the-syncthing-configuration-folder))
 
 * Setup installs Syncthing as a Windows service (see [Windows Service Installation](#windows-service-installation))
 
@@ -265,11 +272,13 @@ The following notes apply to administrative (all users) installation mode:
 
 * Administrative permissions are required to make changes to files in the Syncthing configuration folder
 
-## Windows Service Installation
+> NOTE: You must specify `/allusers` on Setup's command line to install or reinstall in administrative (all users) installation mode.
+
+#### Windows Service Installation
 
 When you run Setup in administrative (all users) installation mode, it installs Syncthing as a Windows service. The service runs using a local service account (**SyncthingServiceAcct** by default). By default, Setup configures the service to start at boot. You can change this default by deselecting the `startatboot` task when installing (see [Setup Tasks](#setup-tasks)).
 
-### Local User Service Account Considerations
+#### Local User Service Account Considerations
 
 In administrative installation mode, Setup setup creates or updates the local service user account (**SyncthingServiceAcct** by default) with a very long, random password and configures the following settings for the account:
 
@@ -283,7 +292,7 @@ If the computer is joined to a domain, be aware that Group Policy Object (GPO) s
 
 * Update the relevant GPO(s) to prevent overriding of the setting(s).
 
-## Granting Folder Permissions for the Service Account
+#### Granting Folder Permissions for the Service Account
 
 In administrative (all users) installation mode, Syncthing runs as a Windows service using a local service user account (**SyncthingServiceAcct** by default). Normally the local service user account does not have permissions to folders you want to synchronize using Syncthing. This means you must grant the local service user account "Modify" permissions to any folders specified in the Syncthing configuration.
 
@@ -381,7 +390,7 @@ If you want to disable the logon task instead, do the following:
 
 If you installed Syncthing for all users (i.e., the Windows service is installed), do the following:
 
-* Run Setup to reinstall Syncthing and select or deselect the `startatboot` task (i.e., the **Start Syncthing service automatically when system boots** checkbox on the **Select Additional Tasks** page).
+* Run Setup with the `/allusers` parameter to reinstall Syncthing and select or deselect the `startatboot` task (i.e., the **Start Syncthing service automatically when system boots** checkbox on the **Select Additional Tasks** page).
 
 OR
 
@@ -481,6 +490,7 @@ Tool                       | Installation Mode        | Description
 `stctl.exe`                | Current user (non admin) | Helper program for starting and stopping Syncthing for the current user.
 `asmt.exe`                 | All users (admin)        | Helper program for installing and/or resetting the service account and service configuration.
 `ServMan.exe`              | All users (admin)        | Helper program for starting and stopping the Syncthing service.
+`shawl.exe`                | All users (admin)        | Helper program for running Syncthing as a Windows service.
 
 ## Resetting the Service Account Password
 
@@ -502,7 +512,7 @@ This command will reset the service account's password to a long, random passwor
 
 The location of the Syncthing configuration folder depends on whether you run Setup in non administrative (current user) or administrative (all users) or installation mode:
 
-* If you installed for the current user, the Syncthing configuration folder is in the following location:
+* If you installed for the current user (the default), the Syncthing configuration folder is in the following location:
 
   _LocalAppData_`\Syncthing`
 
@@ -510,7 +520,7 @@ The location of the Syncthing configuration folder depends on whether you run Se
 
   Administrative permissions are not required to access this folder.
 
-* If you installed for all users, the Syncthing configuration folder is in the following location:
+* If you installed for all users (i.e., you specified the `/allusers` parameter on Setup's command line), the Syncthing configuration folder is in the following location:
 
     _CommonAppData_`\Syncthing`
 
@@ -544,7 +554,7 @@ Setup supports silent (hands-free) install and uninstall mode using the `/silent
 
 ### Silent Non Administrative (Current User) Installation
 
-To perform an initial install (i.e., not a reinstall or upgrade) silently in non administrative (current user) installation mode, specify the `/currentuser` and `/silent` command line parameters on Setup's command line. In this mode, Setup:
+To perform an initial install (i.e., not a reinstall or upgrade) silently in non administrative (current user) installation mode, specify the `/silent` parameter on Setup's command line. (You can also include `/currentuser` on Setup's command line for clarity if desired, but this is not required as `/currentuser` is the default.) In this mode, Setup:
 
 * Does not install the Windows service
 
@@ -554,11 +564,9 @@ To perform an initial install (i.e., not a reinstall or upgrade) silently in non
 
 To ensure Syncthing works correctly after a non administrative (current user) silent installation, create the firewall rule manually (see [Creating the Firewall Rule Manually](#creating-the-firewall-rule-manually)) before starting Syncthing.
 
-A silent reinstall or upgrade does not require the `/currentuser` parameter.
-
 ### Silent Administrative (All Users) Installation
 
-To perform an initial install (i.e., not a reinstall or upgrade) silently in administrative installation (all users) mode, specify the `/allusers` and `/silent` command line parameters on Setup's command line. In this mode, Setup:
+To perform a silent installation in administrative installation (all users) mode, you must specify both the `/allusers` and `/silent` parameters on Setup's command line. In this mode, Setup:
 
 * Installs the Windows service
 
@@ -566,7 +574,7 @@ To perform an initial install (i.e., not a reinstall or upgrade) silently in adm
 
 * Starts the Syncthing service after installation completes
 
-A silent reinstall or upgrade does not require the `/allusers` parameter.
+> NOTE: You must specify `/allusers` if reinstalling in administrative (all users) installation mode.
 
 ### Silent Uninstall
 

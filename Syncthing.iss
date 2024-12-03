@@ -54,7 +54,7 @@ DefaultGroupName={#AppName}
 DisableWelcomePage=yes
 AllowNoIcons=yes
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
+PrivilegesRequiredOverridesAllowed=commandline
 OutputDir=.
 OutputBaseFilename=syncthing-windows-setup
 Compression=lzma2/max
@@ -255,6 +255,9 @@ const
   ERROR_SERVICE_ALREADY_RUNNING = 1056;
   ERROR_SERVICE_NOT_ACTIVE      = 1062;
 
+type
+  TInstallType = (InstallTypeNotInstalled, InstallTypeAdmin, InstallTypeNonAdmin);
+
 // Global variables
 var
   OutputMsgMemoPage0: TOutputMsgMemoWizardPage;
@@ -324,13 +327,28 @@ begin
     Log(CustomMessage('ProcessCheckFailed'));
 end;
 
-// UninsIS.dll - Returns true if package is detected as installed,
-// or false otherwise
-function IsISPackageInstalled(): Boolean;
+// UninsIS.dll - Returns installation type
+function IsISPackageInstalled(): TInstallType;
 begin
-  result := DLLIsISPackageInstalled('{#AppID}',  // AppId
-    DWORD(Is64BitInstallMode()),                 // Is64BitInstallMode
-    DWORD(IsAdminInstallMode())) = 1;            // IsAdminInstallMode
+  if DLLIsISPackageInstalled('{#AppID}',  // AppId
+    DWORD(Is64BitInstallMode()),          // Is64BitInstallMode
+    1) = 1 then                           // IsAdminInstallMode
+  begin
+    result := InstallTypeAdmin;
+    Log(CustomMessage('InstallTypeAdmin'));
+  end
+  else if DLLIsIsPackageInstalled('{#AppID}',  // AppId
+    DWORD(Is64BitInstallMode()),               // Is64BitInstallMode
+    0) = 1 then                                // IsAdminInstallMode
+  begin
+    result := InstallTypeNonAdmin;
+    Log(CustomMessage('InstallTypeNonAdmin'));
+  end
+  else
+  begin
+    result := InstallTypeNotInstalled;
+    Log(CustomMessage('InstallTypeNotInstalled'));
+  end;
 end;
 
 // UninsIS.dll - Returns:
@@ -495,6 +513,17 @@ begin
       MsgBox(Msg, mbCriticalError, MB_OK);
     exit;
   end;
+  // /currentuser is the default, so abort Setup if admin install detected
+  // and tell user to restart Setup using /allusers option
+  if (not IsAdminInstallMode()) and (IsISPackageInstalled() = InstallTypeAdmin) and (not ParamStrExists('/allowcurrentuser')) then
+  begin
+    result := false;
+    Msg := CustomMessage('InitializeSetupError2');
+    Log(Msg);
+    if not WizardSilent() then
+      MsgBox(Msg, mbCriticalError, MB_OK);
+    exit;
+  end;
   ExecOutputFirstLine := '';
   // Custom command line parameters
   AutoUpgradeInterval := GetPreviousData('AutoUpgradeInterval',
@@ -528,20 +557,26 @@ end;
 
 procedure InitializeWizard();
 var
+  LicenseOK: Boolean;
+  PageID: Integer;
   LicenseFileText: AnsiString;
 begin
   // Custom memo page(s)
   ExtractTemporaryFile('{#LicenseFileName}');
-  if LoadStringFromFile(ExpandConstant('{tmp}\{#LicenseFileName}'), LicenseFileText) then
+  LicenseOK := LoadStringFromFile(ExpandConstant('{tmp}\{#LicenseFileName}'), LicenseFileText);
+  if LicenseOK then
   begin
     OutputMsgMemoPage0 := CreateOutputMsgMemoPage(wpInfoBefore,
       CustomMessage('MemoPage0Caption'),
       CustomMessage('MemoPage0Description'),
       CustomMessage('MemoPage0SubCaption'),
       LicenseFileText);
-  end;
+    PageID := OutputMsgMemoPage0.ID;
+  end
+  else
+    PageID := wpInfoBefore;
   // Custom file page(s)
-  FilePage0 := CreateInputFilePage(OutputMsgMemoPage0.ID,
+  FilePage0 := CreateInputFilePage(PageID,
     CustomMessage('FilePage0Caption'),
     CustomMessage('FilePage0Description'),
     CustomMessage('FilePage0SubCaption'));
@@ -1036,7 +1071,7 @@ var
   InstalledSetupVersion: string;
 begin
   result := '';
-  if IsISPackageInstalled() then
+  if IsISPackageInstalled() <> InstallTypeNotInstalled then
   begin
     InstalledSetupVersion := GetIniString('Setup', 'Version', '', ExpandConstant('{app}\{#IniFileName}'));
     if (InstalledSetupVersion = '') or

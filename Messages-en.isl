@@ -5,12 +5,12 @@
 [Messages]
 PrivilegesRequiredOverrideTitle=Select Setup Install Mode
 PrivilegesRequiredOverrideInstruction=Select install mode
-PrivilegesRequiredOverrideText1=%1 can be installed for all users (requires administrative privileges), or for the current user only.
-PrivilegesRequiredOverrideText2=%1 can be installed for the current user only, or for all users (requires administrative privileges).
-PrivilegesRequiredOverrideAllUsers=Install for &all users
-PrivilegesRequiredOverrideAllUsersRecommended=Install for &all users
+PrivilegesRequiredOverrideText1=%1 can be installed for all users as a Windows service (requires administrative privileges), or for the current user only.
+PrivilegesRequiredOverrideText2=%1 can be installed for the current user only, or for all users as a Windows service (requires administrative privileges).
+PrivilegesRequiredOverrideAllUsers=Install for &all users as a Windows service
+PrivilegesRequiredOverrideAllUsersRecommended=Install for &all users as a Windows service (recommended)
 PrivilegesRequiredOverrideCurrentUser=Install for &current user only
-PrivilegesRequiredOverrideCurrentUserRecommended=Install for &current user only
+PrivilegesRequiredOverrideCurrentUserRecommended=Install for &current user only (recommended)
 FinishedLabel=Setup has finished installing [name] on your computer.
 
 [CustomMessages]
@@ -42,6 +42,7 @@ RunPostInstallOpenConfigPage=&Open Syncthing configuration page
 ; Initialization
 InitializeSetupError0=Setup initialization error: Installation for all users is not permitted on a domain controller.%n%nSetup will now exit.
 InitializeSetupError1=Setup initialization error: WSH script registration is not valid.%n%nTo correct this issue, please see the "Setup Initalization Errors" section in the documentation.%n%nSetup will now exit.
+InitializeSetupError2=Setup initialization error: Administrative installation detected.%n%nSetup has detected that an administrative installation is already installed. To reinstall, please restart Setup with the /ALLUSERS command line option.%n%nSetup will now exit.
 InitializeSetupWarning0=Warning: Unable to retrieve latest version information from github.com.
 ; Memo pages
 MemoPage0Caption=License
@@ -99,6 +100,9 @@ RunCommandMessage=Run command: "%1" %2
 ProcessCheckSucceededRunning=FindProcess function in ProcessCheck.dll succeeded; "%1" is running
 ProcessCheckSucceededNotRunning=FindProcess function in ProcessCheck.dll succeeded; "%1" is not running
 ProcessCheckFailed=FindProcess function in ProcessCheck.dll failed
+InstallTypeNotInstalled=The package is not detected as installed.
+InstallTypeAdmin=The package is detected as installed in administrative installation mode.
+InstallTypeNonAdmin=The package is detected as installed in non administrative installation mode.
 DownloadFileSucceeded=Download succeeded
 ZipFilePathFound=The specified zip file was found.
 ZipFilePathNotFound=The specified zip file was not found.

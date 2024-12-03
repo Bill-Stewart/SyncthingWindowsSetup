@@ -2,6 +2,16 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.28.0 (2024-12-03)
+
+* Setup now defaults to non administrative (per user) installation mode. To install the service, you must specify the `/allusers` parameter on Setup's command line.
+
+* As a result of the above change, an administrative mode reinstall requires the `/allusers` parameter on Setup's command line. If the package is installed in administrative (all users) installation mode and you don't specify the `/allusers` parameter when reinstalling, Setup will abort with an error message.
+
+* Updated [stctl](https://github.com/Bill-Stewart/stctl/) to version 0.0.4.
+
+* Updated [shawl](https://github.com/mtkennerly/shawl/) to version 1.6.0.
+
 ## 1.27.28 (2024-10-16)
 
 * Fixed: zip file extraction now (correctly) overwrites destination files.
