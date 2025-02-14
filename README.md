@@ -71,7 +71,7 @@ Syncthing Windows Setup (herein referred to as "Setup") provides a [Syncthing](h
 
 * Supports offline installation for Windows-based computers that can't connect to GitHub (see [Offline Installation](#offline-installation))
 
-* Supports non administrative (current user) and administrative (all users) installation (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode))
+* Supports non administrative (current user) and administrative (all users) installation (see [Non Administrative vs. Administrative Installation Mode](#non-administrative-vs-administrative-installation-mode))
 
 * When installing for the current user (the default), Setup creates a scheduled task that starts Syncthing at logon (if selected)
 
@@ -146,8 +146,8 @@ The following table lists the most common Setup command line parameters:
 
 Parameter                                | Description
 ---------                                | -----------
-`/currentuser`                           | Runs Setup in non-administrative (current user) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)). This is the default and is recommended for most users.
-`/allusers`                              | Runs Setup in administrative (all users) installation mode (see [Administrative vs. Non Administrative Installation Mode](#administrative-vs-non-administrative-installation-mode)). This installs the Windows service and is recommended for more advanced users. NOTE: You must specify this parameter if performing a reinstall in administrative (all users) installation mode, even if the package is already installed.
+`/currentuser`                           | Runs Setup in non-administrative (current user) installation mode (see [Non Administrative vs. Administrative Installation Mode](##non-administrative-vs-administrative-installation-mode)). This is the default and is recommended for most users.
+`/allusers`                              | Runs Setup in administrative (all users) installation mode (see [Non Administrative vs. Administrative Installation Mode](##non-administrative-vs-administrative-installation-mode)). This installs the Windows service and is recommended for more advanced users. NOTE: You must specify this parameter if performing a reinstall in administrative (all users) installation mode, even if the package is already installed.
 `/dir="`_location_`"`                    | Specifies the installation folder. The default installation folder depends on whether Setup runs in administrative (all users) or non administrative (current user) installation mode.
 `/group="`_name_`"`                      | Specifies the Start Menu group name. The default group name is **Syncthing**.
 `/tasks="`_task_[`,`_task_[...]]`"`      | Selects one or more tasks on the **Select Additional Tasks** wizard page (see [Setup Tasks](#setup-tasks)).
