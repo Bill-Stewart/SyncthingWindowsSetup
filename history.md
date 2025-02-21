@@ -2,6 +2,14 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 1.29.0 (2024-02-21)
+
+* Updated [shawl](https://github.com/mtkennerly/shawl/) to version 1.7.0.
+
+* Added [ErrInfo](https://github.com/Bill-Stewart/ErrInfo/) for use within scripts.
+
+* Built using Inno Setup 6.4.1.
+
 ## 1.28.0 (2024-12-03)
 
 * Setup now defaults to non administrative (per user) installation mode. To install the service, you must specify the `/allusers` parameter on Setup's command line.

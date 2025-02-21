@@ -58,22 +58,26 @@ function getErrorDescription(errorCode) {
 
   // Construct command line
   var command = FSO.BuildPath(FSO.GetSpecialFolder(SystemFolder),"cmd.exe") +
-    " /c " + FSO.BuildPath(FSO.GetSpecialFolder(SystemFolder), "net.exe") +
-    " helpmsg " + errorCode.toString() + " > \"" + tempName + "\"";
+    " /c " + FSO.BuildPath(ScriptPath,"ErrInfo.exe -m -n ") +
+    errorCode.toString() + " > \"" + tempName + "\"";
 
   // Run command (output in temporary file)
-  WshShell.Run(command,SW_HIDE,true);
-
-  try {
-    var textStream = FSO.OpenTextFile(tempName,ForReading);
-    var errorDescription = trim(textStream.ReadAll());
-  }
-  catch(err) {
+  var exitCode = WshShell.Run(command,SW_HIDE,true);
+  if ( exitCode == 3871 ) {
     errorDescription = MSG_ERROR_DESC_NOT_FOUND;
   }
-  finally {
-    textStream.Close();
-    FSO.DeleteFile(tempName);
+  else {
+    try {
+      var textStream = FSO.OpenTextFile(tempName,ForReading);
+      var errorDescription = trim(textStream.ReadAll());
+    }
+    catch(err) {
+      errorDescription = MSG_ERROR_DESC_NOT_FOUND;
+    }
+    finally {
+      textStream.Close();
+      FSO.DeleteFile(tempName);
+    }
   }
 
   if ( errorCode == 0 ) {

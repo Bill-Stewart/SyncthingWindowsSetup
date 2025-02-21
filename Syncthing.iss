@@ -59,6 +59,9 @@ OutputDir=.
 OutputBaseFilename=syncthing-windows-setup
 Compression=lzma2/max
 SolidCompression=yes
+LZMADictionarySize=131072
+LZMANumFastBytes=273
+LZMAUseSeparateProcess=yes
 UsePreviousTasks=yes
 WizardStyle=modern
 WizardSizePercent=120
@@ -118,11 +121,13 @@ Source: "shawl-license.txt"; DestDir: "{app}"; Check: IsAdminInstallMode()
 Source: "syncthing.ico"; DestDir: "{app}"
 ; x86compatible binaries
 Source: "binaries\i386\asmt.exe";    DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
+Source: "binaries\i386\ErrInfo.exe"; DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
 Source: "binaries\i386\ServMan.exe"; DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
 Source: "binaries\i386\shawl.exe";   DestDir: "{app}"; Check: (not IsX64Compatible()) and IsAdminInstallMode()
 Source: "binaries\i386\stctl.exe";   DestDir: "{app}"; Check: (not IsX64Compatible()) and (not IsAdminInstallMode())
 ; x64compatible binaries
 Source: "binaries\x86_64\asmt.exe";    DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode(); Flags: solidbreak
+Source: "binaries\x86_64\ErrInfo.exe"; DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
 Source: "binaries\x86_64\ServMan.exe"; DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
 Source: "binaries\x86_64\shawl.exe";   DestDir: "{app}"; Check: IsX64Compatible() and IsAdminInstallMode()
 Source: "binaries\x86_64\stctl.exe";   DestDir: "{app}"; Check: IsX64Compatible() and (not IsAdminInstallMode())
