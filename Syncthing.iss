@@ -166,7 +166,7 @@ Name: "{group}\{cm:ShortcutNameStopSyncthing}"; \
 Filename: "{app}\{#ConfigurationPageName}.url"; \
   Section: "InternetShortcut"; \
   Key: "URL"; \
-  String: "https://{code:GetListenAddress}:{code:GetListenPort}"
+  String: "http://{code:GetListenAddress}:{code:GetListenPort}"
 Filename: "{app}\{#ConfigurationPageName}.url"; \
   Section: "InternetShortcut"; \
   Key: "IconFile"; \
