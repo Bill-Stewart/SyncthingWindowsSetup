@@ -78,7 +78,7 @@ function main() {
       }
       return ERROR_FILE_NOT_FOUND;
     }
-    var cmdLine = '"' + syncthingPath + '" generate --skip-port-probing --home="' + configPath + '"';
+    var cmdLine = '"' + syncthingPath + '" generate --no-port-probing --home="' + configPath + '"';
     if ( ! defaultFolder ) {
       cmdLine += ' --no-default-folder';
     }
