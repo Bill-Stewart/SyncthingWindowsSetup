@@ -9,6 +9,7 @@
 // BEGIN LOCALIZATION
 var MSG_DLG_TITLE           = "Syncthing";
 var MSG_SYNCTHING_NOT_FOUND = "syncthing.exe not found";
+var MSG_SYNCTHING_ERROR     = "syncthing.exe returned an error";
 var MSG_CONFIG_NOT_FOUND    = "File not found:";
 var MSG_CONFIG_NOT_UPDATED  = "Unable to update config.xml";
 // END LOCALIZATION
@@ -18,6 +19,8 @@ var SW_HIDE              = 0;
 var ERROR_FILE_NOT_FOUND = 2;
 var ERROR_ALREADY_EXISTS = 183;
 var MB_ICONERROR         = 0x10;
+var MB_ICONINFORMATION   = 0x40;
+
 // Global Shell.Application constants
 var ssfLOCALAPPDATA  = 0x1C;
 var ssfCOMMONAPPDATA = 0x23;
@@ -78,12 +81,37 @@ function main() {
       }
       return ERROR_FILE_NOT_FOUND;
     }
-    var cmdLine = '"' + syncthingPath + '" generate --no-port-probing --home="' + configPath + '"';
+
+    var cmdLine = '"' + syncthingPath + '" generate '; // --no-port-probing --home="' + configPath + '"';
+
+    var version = FSO.GetFileVersion(syncthingPath)
+    if (version.substring(0, 2) == '1.')
+    {
+      cmdLine += ' --skip-port-probing';
+    }
+    else
+    {
+      cmdLine += ' --no-port-probing';
+    }
+
+    cmdLine += ' --home="' + configPath + '"';
+
     if ( ! defaultFolder ) {
       cmdLine += ' --no-default-folder';
     }
+
     // Generate configuration
-    WshShell.Run(cmdLine,SW_HIDE,true);
+    var result = WshShell.Run(cmdLine,SW_HIDE,true);
+    
+    // Fail if not success
+    if (result != 0)
+    {
+      if ( ! Args.Named.Exists("silent") ) {
+        WshShell.Popup(MSG_SYNCTHING_ERROR,0,MSG_DLG_TITLE,MB_ICONERROR);
+      }
+      return ERROR_FILE_NOT_FOUND;    
+    }
+
     // Fail if not found
     if ( ! FSO.FileExists(configFileName) ) {
       if ( ! Args.Named.Exists("silent") ) {
