@@ -2,7 +2,17 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
-## 1.29.0 (2024-02-21)
+## 1.29.1 (2025-05-30)
+
+* Updated configuration script to support Syncthing 2.0 and newer which uses the `--no-port-probing` rather than the `--skip-port-probing` parameter. (Thanks to Göran Roseen for the report.)
+
+* Improved error checking for the configuration script.
+
+* Updated [UninsIS.dll](https://github.com/Bill-Stewart/UninsIS/).
+
+* Built using Inno Setup 6.4.3.
+
+## 1.29.0 (2025-02-21)
 
 * Updated [shawl](https://github.com/mtkennerly/shawl/) to version 1.7.0.
 

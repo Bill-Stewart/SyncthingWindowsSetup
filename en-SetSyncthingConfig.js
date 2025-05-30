@@ -9,6 +9,7 @@
 // BEGIN LOCALIZATION
 var MSG_DLG_TITLE           = "Syncthing";
 var MSG_SYNCTHING_NOT_FOUND = "syncthing.exe not found";
+var MSG_SYNCTHING_ERROR     = "syncthing.exe returned an error";
 var MSG_CONFIG_NOT_FOUND    = "File not found:";
 var MSG_CONFIG_NOT_UPDATED  = "Unable to update config.xml";
 // END LOCALIZATION
@@ -29,6 +30,59 @@ var WshShell       = new ActiveXObject("WScript.Shell");
 var XMLDOMDocument = new ActiveXObject("Microsoft.XMLDOM");
 // Global variables
 var ScriptPath = WScript.ScriptFullName.substring(0,WScript.ScriptFullName.length - WScript.ScriptName.length);
+
+// Version object for comparing version number strings 'a[.b[.c[.d]]]'
+// compare() method returns:
+// * -1 if object's version < otherVersion
+// * 0 if object's version == otherVersion
+// * > 1 if object's version > otherVersion
+function Version(value) {
+  var isValid = true;
+  this.parts = value.split(".");
+  if ( this.parts.length != 4 )
+    this.parts.length = 4;
+  for ( var i = 0; i < this.parts.length; i++ ) {
+    if ( (this.parts[i] == null) || (this.parts[i] == "") ) {
+      var part = 0;
+    }
+    else {
+      part = parseInt(this.parts[i],10);
+      isValid = (! isNaN(part)) && (part <= 0xFFFF);
+    }
+    if ( ! isValid ) {
+      this.parts = [0,0,0,0];
+      break;
+    }
+    this.parts[i] = part;
+  }
+  this.compare = function(otherVersion) {
+    var result = -1;
+    for ( var i = 0; i < 4; i++ ) {
+      if ( this.parts[0] > otherVersion.parts[0] ) {
+        result = 1;
+      }
+      else if ( this.parts[0] == otherVersion.parts[0] ) {
+        if ( this.parts[1] > otherVersion.parts[1] ) {
+          result = 1;
+        }
+        else if ( this.parts[1] == otherVersion.parts[1] ) {
+          if ( this.parts[2] > otherVersion.parts[2] ) {
+            result = 1;
+          }
+          else if ( this.parts[2] == otherVersion.parts[2] ) {
+            if ( this.parts[3] > otherVersion.parts[3] ) {
+              result = 1;
+            }
+            else if ( this.parts[3] == otherVersion.parts[3] ) {
+              result = 0;
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+}
 
 function help() {
   WScript.Echo("Usage: " + WScript.ScriptName + " {/currentuser|/service} <settings> [/silent]");
@@ -78,12 +132,21 @@ function main() {
       }
       return ERROR_FILE_NOT_FOUND;
     }
-    var cmdLine = '"' + syncthingPath + '" generate --skip-port-probing --home="' + configPath + '"';
+    var version = new Version(FSO.GetFileVersion(syncthingPath));
+    // version >= 2 uses --no-port-probing rather than --skip-port-probing
+    portParam = version.compare(new Version("2")) >= 0 ? '--no-port-probing' : '--skip-port-probing';
+    var cmdLine = '"' + syncthingPath + '" generate ' + portParam + ' --home="' + configPath + '"';
     if ( ! defaultFolder ) {
       cmdLine += ' --no-default-folder';
     }
-    // Generate configuration
-    WshShell.Run(cmdLine,SW_HIDE,true);
+    // Generate configuration; fail if non-zero exit code
+    var exitCode = WshShell.Run(cmdLine,SW_HIDE,true);
+    if ( exitCode != 0 ) {
+      if ( ! Args.Named.Exists("silent") ) {
+        WshShell.Popup(MSG_SYNCTHING_ERROR,0,MSG_DLG_TITLE,MB_ICONERROR);
+      }
+      return exitCode;
+    }
     // Fail if not found
     if ( ! FSO.FileExists(configFileName) ) {
       if ( ! Args.Named.Exists("silent") ) {

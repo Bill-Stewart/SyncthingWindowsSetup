@@ -36,6 +36,7 @@ The following table lists all of the files associated with Syncthing Windows Set
 2. Download the executables for the `binaries` folder:
 
    * [asmt](https://github.com/Bill-Stewart/asmt/releases/latest/)
+   * [ErrInfo](https://github.com/Bill-Stewart/ErrInfo)
    * [ServMan](https://github.com/Bill-Stewart/ServMan/releases/latest/)
    * [shawl](https://github.com/mtkennerly/shawl/releases/latest/)
    * [stctl](https://github.com/Bill-Stewart/stctl/releases/latest/)
