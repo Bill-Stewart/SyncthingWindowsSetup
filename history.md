@@ -2,6 +2,10 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 2.0.0 (2025-08-18)
+
+* Updated [stctl](https://github.com/Bill-Stewart/stctl) to version 0.0.5.
+
 ## 1.29.1 (2025-05-30)
 
 * Updated configuration script to support Syncthing 2.0 and newer which uses the `--no-port-probing` rather than the `--skip-port-probing` parameter. (Thanks to Göran Roseen for the report.)
