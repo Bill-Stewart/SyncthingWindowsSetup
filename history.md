@@ -2,6 +2,12 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 2.0.1 (2026-01-05)
+
+* Updated configuration script not to use Syncthing's `--no-default-folder` command-line option if the installed Syncthing version is version 2 or later. This option is now obsolete in Syncthing v2 and later. (If the option is present, Syncthing terminates with an error instead of ignoring the option.)
+
+* Built using Inno Setup 6.6.1.
+
 ## 2.0.0 (2025-08-18)
 
 * Updated [stctl](https://github.com/Bill-Stewart/stctl) to version 0.0.5.

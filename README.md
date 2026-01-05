@@ -280,7 +280,7 @@ When you run Setup in administrative (all users) installation mode, it installs 
 
 #### Local User Service Account Considerations
 
-In administrative installation mode, Setup setup creates or updates the local service user account (**SyncthingServiceAcct** by default) with a very long, random password and configures the following settings for the account:
+In administrative installation mode, Setup creates or updates the local service user account (**SyncthingServiceAcct** by default) with a very long, random password and configures the following settings for the account:
 
 * It sets the account's password not to expire
 
@@ -368,7 +368,7 @@ If you installed Syncthing for the current user, Setup creates a scheduled task 
 
 If you did not select the `startatlogon` task when installing and want to create the task, do either of the following:
 
-* Run setup to reinstall Syncthing and select the `startatlogon` task (i.e., the **Start Syncthing automatically when logging on** checkbox on the **Select Additional Tasks** page).
+* Run Setup to reinstall Syncthing and select the `startatlogon` task (i.e., the **Start Syncthing automatically when logging on** checkbox on the **Select Additional Tasks** page).
 
 OR
 

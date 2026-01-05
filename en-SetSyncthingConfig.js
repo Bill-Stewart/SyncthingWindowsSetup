@@ -133,10 +133,12 @@ function main() {
       return ERROR_FILE_NOT_FOUND;
     }
     var version = new Version(FSO.GetFileVersion(syncthingPath));
+    var isLegacy = version.compare(new Version("2")) < 0;
     // version >= 2 uses --no-port-probing rather than --skip-port-probing
-    portParam = version.compare(new Version("2")) >= 0 ? '--no-port-probing' : '--skip-port-probing';
+    portParam = ! isLegacy ? '--no-port-probing' : '--skip-port-probing';
     var cmdLine = '"' + syncthingPath + '" generate ' + portParam + ' --home="' + configPath + '"';
-    if ( ! defaultFolder ) {
+    // version >= 2 does not support --no-default-folder
+    if ( isLegacy && (! defaultFolder) ) {
       cmdLine += ' --no-default-folder';
     }
     // Generate configuration; fail if non-zero exit code
