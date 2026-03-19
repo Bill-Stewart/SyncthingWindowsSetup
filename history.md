@@ -2,6 +2,14 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 2.0.2 (2026-03-19)
+
+* Updated [jq](https://jqlang.org/) to version 1.8.1.
+
+* Updated [shawl](https://github.com/mtkennerly/shawl) to version 1.8.0.
+
+* Built using Inno Setup 6.7.1.
+
 ## 2.0.1 (2026-01-05)
 
 * Updated configuration script not to use Syncthing's `--no-default-folder` command-line option if the installed Syncthing version is version 2 or later. This option is now obsolete in Syncthing v2 and later. (If the option is present, Syncthing terminates with an error instead of ignoring the option.)
