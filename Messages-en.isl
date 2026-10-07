@@ -1,6 +1,4 @@
-﻿#preproc ispp
-
-; File encoding: UTF-8 with byte-order marker (BOM)
+﻿; File encoding: UTF-8 with byte-order marker (BOM)
 
 [Messages]
 PrivilegesRequiredOverrideTitle=Select Setup Install Mode

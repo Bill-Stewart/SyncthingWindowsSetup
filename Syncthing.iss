@@ -23,6 +23,7 @@
 #define AppURL "https://syncthing.net/"
 #define IniFileName "SetupVersion.ini"
 #define SetupVersion ReadIni(AddBackslash(SourcePath) + IniFileName, "Setup", "Version")
+#define SemanticVersion RemoveFileExt(SetupVersion)  ; not really what it's for, but it works!
 #define ServiceName "syncthing"
 #define ServiceShutdownTimeout "10000"
 #define DefaultAutoUpgradeInterval "12"
@@ -56,12 +57,11 @@ AllowNoIcons=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline
 OutputDir=.
-OutputBaseFilename=syncthing-windows-setup
+OutputBaseFilename=syncthing-windows-setup-v{#SemanticVersion}
 Compression=lzma2/max
 SolidCompression=yes
 LZMADictionarySize=131072
 LZMANumFastBytes=273
-LZMAUseSeparateProcess=yes
 UsePreviousTasks=yes
 WizardStyle=modern
 WizardSizePercent=120
@@ -81,8 +81,7 @@ Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; InfoBeforeFile
 ; See building.md file for localization details
 #define protected
 #define LocalizationFile AddBackslash(SourcePath) + "Localization.ini"
-#define NumLanguages 1
-#dim    Languages[NumLanguages]
+#dim Languages[1]
 #define Languages[0] "en"
 
 [Files]
@@ -99,7 +98,7 @@ Source: "{#ScriptNameFirewallRule}"; DestDir: "{app}"; DestName: "{#ScriptNameSy
 Source: "{#ScriptNameSetConfig}"; DestDir: "{app}"; DestName: "{#ScriptNameSetSyncthingConfig}"; Languages: "{#Language}"
 Source: "{#ScriptNameLogonTask}"; DestDir: "{app}"; DestName: "{#ScriptNameSyncthingLogonTask}"; Languages: "{#language}"; Check: not IsAdminInstallMode()
 #endsub
-#for { i = 0; i < NumLanguages; i++ } LocalizeFiles
+#for { i = 0; i < DimOf(Languages); i++ } LocalizeFiles
 
 ; Installer-only
 ; Support automatic uninstall of older versions
@@ -406,6 +405,31 @@ begin
   result := RegQueryStringValue(HKEY_CLASSES_ROOT, '.js', '', Value);
   if result then
     result := SameText(Value, 'JSFile');
+end;
+
+function GetDirSize(const DirName: string): Int64;
+var
+  FindRec: TFindRec;
+  FilePath: string;
+  Size: Int64;
+begin
+  result := 0;
+  if FindFirst(AddBackslash(DirName) + '*', FindRec) then
+  try
+    repeat
+      if (FindRec.Name <> '.') and (FindRec.Name <> '..') then
+      begin
+        FilePath := AddBackslash(DirName) + FindRec.Name;
+        if FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY <> 0 then
+          Size := GetDirSize(FilePath)
+        else
+          Size := (Int64(FindRec.SizeHigh) shl 32) + FindRec.SizeLow;
+        result := result + Size;
+      end;
+    until not FindNext(FindRec);
+  finally
+    FindClose(FindRec);
+  end;
 end;
 
 procedure OnExecAndLogOutput(const S: String; const Error, FirstLine: Boolean);
@@ -1116,7 +1140,9 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  Version, Params, FileName: string;
+  Version, Params, FileName, SubKeyName: string;
+  Size: Int64;
+  RootKey: Integer;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -1167,6 +1193,17 @@ begin
         else
           Log(FmtMessage(CustomMessage('FileDeleteFailed'), [FileName]));
       end;
+    end;
+    Size := GetDirSize(ExpandConstant('{app}'));
+    if Size > 0 then
+    begin
+      Size := Round(Size / 1024);
+      if IsAdminInstallMode() then
+        RootKey := HKLM
+      else
+        RootKey := HKCU;
+      SubKeyName := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#AppID}_is1';
+      RegWriteDWORDValue(RootKey, SubKeyName, 'EstimatedSize', Size);
     end;
   end;
 end;

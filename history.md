@@ -2,6 +2,20 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 2.1.0 (2026-10-07)
+
+* Updated [jq](https://jqlang.org) to version 1.8.2.
+
+* Updated [shawl](https://github.com/mtkennerly/shawl) to version 1.9.0.
+
+* Updated [UninsIS.dll](https://github.com/Bill-Stewart/UninsIS) to version 1.7.
+
+* Size display in Windows application list is now more accurate.
+
+* Built using Inno Setup 7.1.0.
+
+* Minor tweaks.
+
 ## 2.0.2 (2026-03-19)
 
 * Updated [jq](https://jqlang.org/) to version 1.8.1.

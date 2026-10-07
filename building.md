@@ -69,17 +69,17 @@ To add additional language support to Setup, do the following:
 
 8.  In the `Localization.ini` file, add a section for the language, and specify the source file names you want to use for the language.
 
-9.  Increment the `NumLanguages` preprocessor directive in `Syncthing.iss`.
+9.  Set the index value in the `#dim Languages[`_n_`]` preprocessor directive to match the number of languages in use.
 
 10. Add a language preprocessor directive to `Syncthing.iss`, using the following syntax:
 
-     `#define Languages[`_index_`] "`_lang_`"`
+    `#define Languages[`_index_`] "`_lang_`"`
 
-     (where _index_ is the next-higher index value in the `Languages` preprocessor directive array)
+    (where _index_ is the next-higher index value in the `Languages` preprocessor directive array, and where _lang_ is the language code you want to use)
 
 ## Localization Example
 
-The following steps describe how to add localization for Dutch (language code `nl`):
+The following steps provide an example of how to add localization for Dutch (language code `nl`):
 
 1.  Copy `Messages-en.isl` to `Messages-nl.isl`.
 
@@ -89,7 +89,7 @@ The following steps describe how to add localization for Dutch (language code `n
 
 4.  Provide a Dutch-language copy of the README in RTF as `nl-README.rtf`.
 
-5.  Add Dutch to the `[Languages]` section in `Syncthing.iss`; e.g.:
+5.  In `Syncthing.iss`, add Dutch to the `[Languages]` section; e.g.:
 
         [Languages]
         Name: "en"; MessagesFile: "compiler:Default.isl,Messages-en.isl"; InfoBeforeFile: "en-README.rtf"
@@ -109,13 +109,11 @@ The following steps describe how to add localization for Dutch (language code `n
         ScriptNameSyncthingFirewallRule=nl-SyncthingFirewallRule.js
         ScriptNameSyncthingLogonTask=nl-SyncthingLogonTask.js
 
-9.  Increment the `NumLanguages` preprocessor directive in `Syncthing.iss`; e.g.:
+9.  In `Syncthing.iss`, set the `#dim Languages[`_n_`]` preprocessor directive to match the number of languages in use; e.g.:
 
-        ...
-        #define NumLanguages 2
-        ...
+        #dim Languages[2]
 
-10. Also in `Syncthing.iss`, add Dutch to the `Languages` preprocessor directive array using the next higher index; e.g.:
+10. In `Syncthing.iss`, add Dutch to the `Languages` preprocessor directive array using the next higher index; e.g.:
 
         ...
         #define Languages[0] "en"

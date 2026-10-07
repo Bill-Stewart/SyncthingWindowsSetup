@@ -59,7 +59,7 @@ Syncthing Windows Setup has the same requirements as Syncthing itself: Windows 1
 
 ## Download
 
-You can download the latest version of Syncthing Windows Setup from the Github Releases page:
+You can download the latest version of Syncthing Windows Setup from the GitHub Releases page:
 
 https://github.com/Bill-Stewart/SyncthingWindowsSetup/releases/latest/
 
@@ -208,7 +208,7 @@ Please note the following behaviors:
 
 * If Setup can't connect to GitHub to retrieve the latest Syncthing version information, it will assume an offline installation and display the **Select Installation Zip File** wizard page.
 
-* If you specify the **/zipfilepath** parameter, Setup will not attempt to connect to GetHub to retrieve Syncthing version information or download the latest installation zip file.
+* If you specify the **/zipfilepath** parameter, Setup will not attempt to connect to GitHub to retrieve Syncthing version information or download the latest installation zip file.
 
 ## Non Administrative vs. Administrative Installation Mode
 
