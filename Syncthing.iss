@@ -1141,8 +1141,9 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   Version, Params, FileName, SubKeyName: string;
-  Size: Int64;
+  Size, PackedVersion: Int64;
   RootKey: Integer;
+  Major, Minor, Revision, Build: Word;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -1204,6 +1205,13 @@ begin
         RootKey := HKCU;
       SubKeyName := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#AppID}_is1';
       RegWriteDWORDValue(RootKey, SubKeyName, 'EstimatedSize', Size);
+    end;
+    if StrToVersion('{#SetupVersion}', PackedVersion) then
+    begin
+      // Add Version registry value for winget compatibility (Thanks Jared H-Saul L.)
+      UnpackVersionComponents(PackedVersion, Major, Minor, Revision, Build);
+      RegWriteDWORDValue(RootKey, SubKeyName, 'Version',
+        (Cardinal(Major) shl 24) or (Cardinal(Minor) shl 16) or Cardinal(Revision));
     end;
   end;
 end;

@@ -2,6 +2,10 @@
 
 Below are the release notes for Syncthing Windows Setup (herein after referred to as Setup).
 
+## 2.1.1 (2026-10-15)
+
+* Added **Version** registry value to support [winget](https://github.com/microsoft/winget-cli/) (thanks to Jared H-Saul L. for analysis and recommendation).
+
 ## 2.1.0 (2026-10-07)
 
 * Updated [jq](https://jqlang.org) to version 1.8.2.
